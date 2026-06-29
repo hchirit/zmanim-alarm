@@ -1,0 +1,60 @@
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/location_service.dart';
+
+class SettingsProvider extends ChangeNotifier {
+  final LocationService _locationSvc = LocationService();
+
+  LocationData _location = LocationData.jerusalem;
+  bool _useGPS = true;
+  String _calculationMethod = 'GRA'; // 'GRA' or 'MGA'
+  bool _loaded = false;
+
+  LocationData get location => _location;
+  bool get useGPS => _useGPS;
+  String get calculationMethod => _calculationMethod;
+  bool get loaded => _loaded;
+
+  Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    _useGPS = prefs.getBool('use_gps') ?? true;
+    _calculationMethod = prefs.getString('calculation_method') ?? 'GRA';
+    _location = await _locationSvc.getSavedLocation();
+    _loaded = true;
+    notifyListeners();
+
+    if (_useGPS) {
+      await refreshGPSLocation();
+    }
+  }
+
+  Future<void> refreshGPSLocation() async {
+    final loc = await _locationSvc.getCurrentLocation();
+    if (loc != null) {
+      _location = loc;
+      await _locationSvc.saveLocation(loc);
+      notifyListeners();
+    }
+  }
+
+  Future<void> setManualLocation(LocationData location) async {
+    _location = location;
+    await _locationSvc.saveLocation(location);
+    notifyListeners();
+  }
+
+  Future<void> setUseGPS(bool value) async {
+    _useGPS = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('use_gps', value);
+    notifyListeners();
+    if (value) await refreshGPSLocation();
+  }
+
+  Future<void> setCalculationMethod(String method) async {
+    _calculationMethod = method;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('calculation_method', method);
+    notifyListeners();
+  }
+}

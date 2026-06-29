@@ -1,0 +1,157 @@
+import 'package:flutter/material.dart';
+
+enum ZmanCategory { morning, afternoon, evening, night }
+
+enum ZmanType {
+  alotHashachar,
+  misheyakir,
+  netzHachamah,
+  sofZmanShmaGRA,
+  sofZmanShmaMGA,
+  sofZmanTefillaGRA,
+  sofZmanTefillaMGA,
+  chatzot,
+  minchaGedola,
+  minchaKetana,
+  plagHamincha,
+  shkiah,
+  tzait8_5,
+  tzait42,
+  tzaitRabbenuvTam,
+  chatzotLayla,
+}
+
+extension ZmanTypeInfo on ZmanType {
+  String get hebrewName {
+    const names = {
+      ZmanType.alotHashachar: 'עלות השחר',
+      ZmanType.misheyakir: 'משיכיר',
+      ZmanType.netzHachamah: 'הנץ החמה',
+      ZmanType.sofZmanShmaGRA: 'סוף זמן ק״ש (גר״א)',
+      ZmanType.sofZmanShmaMGA: 'סוף זמן ק״ש (מג״א)',
+      ZmanType.sofZmanTefillaGRA: 'סוף זמן תפלה (גר״א)',
+      ZmanType.sofZmanTefillaMGA: 'סוף זמן תפלה (מג״א)',
+      ZmanType.chatzot: 'חצות היום',
+      ZmanType.minchaGedola: 'מנחה גדולה',
+      ZmanType.minchaKetana: 'מנחה קטנה',
+      ZmanType.plagHamincha: 'פלג המנחה',
+      ZmanType.shkiah: 'שקיעת החמה',
+      ZmanType.tzait8_5: 'צאת הכוכבים',
+      ZmanType.tzait42: 'צאת (42 דקות)',
+      ZmanType.tzaitRabbenuvTam: 'צאת רבנו תם',
+      ZmanType.chatzotLayla: 'חצות הלילה',
+    };
+    return names[this]!;
+  }
+
+  String get frenchName {
+    const names = {
+      ZmanType.alotHashachar: 'Alot HaShachar (Aube)',
+      ZmanType.misheyakir: 'Misheyakir',
+      ZmanType.netzHachamah: 'Netz HaChamah (Lever du soleil)',
+      ZmanType.sofZmanShmaGRA: 'Sof Zman Shma (GRA)',
+      ZmanType.sofZmanShmaMGA: 'Sof Zman Shma (MGA)',
+      ZmanType.sofZmanTefillaGRA: 'Sof Zman Tefilla (GRA)',
+      ZmanType.sofZmanTefillaMGA: 'Sof Zman Tefilla (MGA)',
+      ZmanType.chatzot: 'Chatzot (Midi solaire)',
+      ZmanType.minchaGedola: 'Mincha Gedola',
+      ZmanType.minchaKetana: 'Mincha Ketana',
+      ZmanType.plagHamincha: 'Plag HaMincha',
+      ZmanType.shkiah: 'Shkiah (Coucher du soleil)',
+      ZmanType.tzait8_5: 'Tzait HaKochavim (3 étoiles)',
+      ZmanType.tzait42: 'Tzait (42 min après coucher)',
+      ZmanType.tzaitRabbenuvTam: 'Tzait Rabbenu Tam (72 min)',
+      ZmanType.chatzotLayla: 'Chatzot HaLayla (Minuit)',
+    };
+    return names[this]!;
+  }
+
+  String get description {
+    const descs = {
+      ZmanType.alotHashachar: '16.1° sous l\'horizon – l\'aube astronomique',
+      ZmanType.misheyakir: '11.5° sous l\'horizon – début des mitzvot du matin',
+      ZmanType.netzHachamah: 'Apparition du bord supérieur du soleil',
+      ZmanType.sofZmanShmaGRA: '3 heures proportionnelles (GRA) après le lever',
+      ZmanType.sofZmanShmaMGA: '3 heures proportionnelles (MGA) après l\'aube',
+      ZmanType.sofZmanTefillaGRA: '4 heures proportionnelles (GRA) après le lever',
+      ZmanType.sofZmanTefillaMGA: '4 heures proportionnelles (MGA) après l\'aube',
+      ZmanType.chatzot: 'Le soleil atteint son zénith',
+      ZmanType.minchaGedola: '30 min après Chatzot',
+      ZmanType.minchaKetana: '9.5 heures proportionnelles après le lever',
+      ZmanType.plagHamincha: '10.75 heures proportionnelles après le lever',
+      ZmanType.shkiah: 'Disparition du bord supérieur du soleil',
+      ZmanType.tzait8_5: '8.5° sous l\'horizon – 3 étoiles visibles',
+      ZmanType.tzait42: '42 minutes après le coucher du soleil',
+      ZmanType.tzaitRabbenuvTam: '72 minutes après le coucher du soleil',
+      ZmanType.chatzotLayla: 'Milieu de la nuit astronomique',
+    };
+    return descs[this]!;
+  }
+
+  ZmanCategory get category {
+    const cats = {
+      ZmanType.alotHashachar: ZmanCategory.morning,
+      ZmanType.misheyakir: ZmanCategory.morning,
+      ZmanType.netzHachamah: ZmanCategory.morning,
+      ZmanType.sofZmanShmaGRA: ZmanCategory.morning,
+      ZmanType.sofZmanShmaMGA: ZmanCategory.morning,
+      ZmanType.sofZmanTefillaGRA: ZmanCategory.morning,
+      ZmanType.sofZmanTefillaMGA: ZmanCategory.morning,
+      ZmanType.chatzot: ZmanCategory.afternoon,
+      ZmanType.minchaGedola: ZmanCategory.afternoon,
+      ZmanType.minchaKetana: ZmanCategory.afternoon,
+      ZmanType.plagHamincha: ZmanCategory.afternoon,
+      ZmanType.shkiah: ZmanCategory.evening,
+      ZmanType.tzait8_5: ZmanCategory.evening,
+      ZmanType.tzait42: ZmanCategory.evening,
+      ZmanType.tzaitRabbenuvTam: ZmanCategory.evening,
+      ZmanType.chatzotLayla: ZmanCategory.night,
+    };
+    return cats[this]!;
+  }
+
+  Color get color {
+    switch (category) {
+      case ZmanCategory.morning:
+        return const Color(0xFFFFAB40); // Amber sunrise
+      case ZmanCategory.afternoon:
+        return const Color(0xFF80DEEA); // Cyan midday
+      case ZmanCategory.evening:
+        return const Color(0xFFEF9A9A); // Warm red sunset
+      case ZmanCategory.night:
+        return const Color(0xFFCE93D8); // Purple night
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case ZmanType.alotHashachar:
+        return Icons.nights_stay;
+      case ZmanType.misheyakir:
+        return Icons.wb_twilight;
+      case ZmanType.netzHachamah:
+        return Icons.wb_sunny;
+      case ZmanType.sofZmanShmaGRA:
+      case ZmanType.sofZmanShmaMGA:
+        return Icons.menu_book;
+      case ZmanType.sofZmanTefillaGRA:
+      case ZmanType.sofZmanTefillaMGA:
+        return Icons.auto_stories;
+      case ZmanType.chatzot:
+        return Icons.brightness_high;
+      case ZmanType.minchaGedola:
+      case ZmanType.minchaKetana:
+        return Icons.sunny;
+      case ZmanType.plagHamincha:
+        return Icons.wb_cloudy;
+      case ZmanType.shkiah:
+        return Icons.brightness_3;
+      case ZmanType.tzait8_5:
+      case ZmanType.tzait42:
+      case ZmanType.tzaitRabbenuvTam:
+        return Icons.star;
+      case ZmanType.chatzotLayla:
+        return Icons.bedtime;
+    }
+  }
+}
