@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../models/alarm.dart';
 import '../models/alarm_sound.dart';
 import '../models/zman_type.dart';
@@ -67,6 +68,27 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
       return _customSoundName ?? _customSoundPath!.split('/').last;
     }
     return _formatSoundName(_customSoundPath!);
+  }
+
+  Future<void> _showZmanBottomSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.cardDark,
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.78,
+      ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _ZmanSheet(
+        selected: _selectedZman,
+        onChanged: (z) {
+          setState(() => _selectedZman = z);
+          Navigator.pop(ctx);
+        },
+      ),
+    );
   }
 
   Future<void> _showSoundBottomSheet() async {
@@ -277,27 +299,13 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
           children: [
-            _Section(
-              title: 'Nom',
-              child: TextFormField(
-                controller: _nameCtrl,
-                style: const TextStyle(color: AppTheme.onSurface),
-                decoration: const InputDecoration(
-                  hintText: 'Ex: Réveil avant Netz',
-                  prefixIcon:
-                      Icon(Icons.label_outline, color: Color(0xFF8BAFC9)),
-                ),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Nom requis' : null,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-            ),
-            const SizedBox(height: 16),
+            _NameHeader(controller: _nameCtrl),
+            const SizedBox(height: 28),
             _Section(
               title: 'Zman',
-              child: _ZmanSelector(
+              child: _ZmanButton(
                 selected: _selectedZman,
-                onChanged: (z) => setState(() => _selectedZman = z),
+                onTap: _showZmanBottomSheet,
               ),
             ),
             const SizedBox(height: 16),
@@ -474,7 +482,7 @@ class _SoundButton extends StatelessWidget {
 
 // ─── Sound Bottom Sheet ───────────────────────────────────────────────────────
 
-class _SoundSheet extends StatelessWidget {
+class _SoundSheet extends StatefulWidget {
   final List<String> bundledPaths;
   final String? selectedPath;
   final bool isCustom;
@@ -490,6 +498,56 @@ class _SoundSheet extends StatelessWidget {
     required this.onSelectBundled,
     required this.onPickFile,
   });
+
+  @override
+  State<_SoundSheet> createState() => _SoundSheetState();
+}
+
+class _SoundSheetState extends State<_SoundSheet> {
+  final AudioPlayer _player = AudioPlayer();
+  String? _playingPath;
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _togglePreview(String assetPath) async {
+    if (_playingPath == assetPath) {
+      await _player.stop();
+      setState(() => _playingPath = null);
+      return;
+    }
+    await _player.stop();
+    setState(() => _playingPath = assetPath);
+    // assetPath is "assets/sounds/file.mp3" → AssetSource needs "sounds/file.mp3"
+    final src = assetPath.startsWith('assets/')
+        ? assetPath.substring('assets/'.length)
+        : assetPath;
+    await _player.play(AssetSource(src));
+    _player.onPlayerComplete.listen((_) {
+      if (mounted && _playingPath == assetPath) {
+        setState(() => _playingPath = null);
+      }
+    });
+  }
+
+  Future<void> _toggleCustomPreview(String filePath) async {
+    if (_playingPath == filePath) {
+      await _player.stop();
+      setState(() => _playingPath = null);
+      return;
+    }
+    await _player.stop();
+    setState(() => _playingPath = filePath);
+    await _player.play(DeviceFileSource(filePath));
+    _player.onPlayerComplete.listen((_) {
+      if (mounted && _playingPath == filePath) {
+        setState(() => _playingPath = null);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -522,7 +580,7 @@ class _SoundSheet extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  if (bundledPaths.isEmpty)
+                  if (widget.bundledPaths.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 12),
                       child: Center(
@@ -531,10 +589,13 @@ class _SoundSheet extends StatelessWidget {
                       ),
                     )
                   else
-                    ...bundledPaths.map((path) => _SheetRow(
+                    ...widget.bundledPaths.map((path) => _SheetRow(
                           name: _AddAlarmScreenState._formatSoundName(path),
-                          isSelected: !isCustom && selectedPath == path,
-                          onTap: () => onSelectBundled(path),
+                          isSelected:
+                              !widget.isCustom && widget.selectedPath == path,
+                          isPlaying: _playingPath == path,
+                          onTap: () => widget.onSelectBundled(path),
+                          onPlayTap: () => _togglePreview(path),
                         )),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -550,29 +611,29 @@ class _SoundSheet extends StatelessWidget {
                     ]),
                   ),
                   GestureDetector(
-                    onTap: onPickFile,
+                    onTap: widget.onPickFile,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        color: isCustom
+                        color: widget.isCustom
                             ? AppTheme.gold.withValues(alpha: 0.08)
                             : AppTheme.surfaceDark,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isCustom
+                          color: widget.isCustom
                               ? AppTheme.gold.withValues(alpha: 0.6)
                               : const Color(0xFF1E3A52),
-                          width: isCustom ? 1.5 : 1,
+                          width: widget.isCustom ? 1.5 : 1,
                         ),
                       ),
                       child: Row(
                         children: [
                           Icon(
-                            isCustom && customSoundName != null
+                            widget.isCustom && widget.customSoundName != null
                                 ? Icons.audio_file
                                 : Icons.folder_open_outlined,
-                            color: isCustom
+                            color: widget.isCustom
                                 ? AppTheme.gold
                                 : const Color(0xFF4A6B85),
                             size: 20,
@@ -583,14 +644,15 @@ class _SoundSheet extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  isCustom && customSoundName != null
-                                      ? customSoundName!
+                                  widget.isCustom &&
+                                          widget.customSoundName != null
+                                      ? widget.customSoundName!
                                       : 'Choisir depuis mon téléphone…',
                                   style: TextStyle(
-                                    color: isCustom
+                                    color: widget.isCustom
                                         ? AppTheme.onSurface
                                         : const Color(0xFF8BAFC9),
-                                    fontWeight: isCustom
+                                    fontWeight: widget.isCustom
                                         ? FontWeight.w600
                                         : FontWeight.normal,
                                     fontSize: 14,
@@ -606,10 +668,38 @@ class _SoundSheet extends StatelessWidget {
                               ],
                             ),
                           ),
-                          if (isCustom)
+                          if (widget.isCustom &&
+                              widget.customSoundName != null) ...[
+                            GestureDetector(
+                              onTap: () {
+                                if (widget.selectedPath != null) {
+                                  _toggleCustomPreview(widget.selectedPath!);
+                                }
+                              },
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                margin: const EdgeInsets.only(right: 8),
+                                decoration: BoxDecoration(
+                                  color: _playingPath == widget.selectedPath
+                                      ? AppTheme.gold.withValues(alpha: 0.2)
+                                      : const Color(0xFF1E3A52),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  _playingPath == widget.selectedPath
+                                      ? Icons.stop
+                                      : Icons.play_arrow,
+                                  color: _playingPath == widget.selectedPath
+                                      ? AppTheme.gold
+                                      : const Color(0xFF4A6B85),
+                                  size: 18,
+                                ),
+                              ),
+                            ),
                             const Icon(Icons.check_circle,
-                                color: AppTheme.gold, size: 18)
-                          else
+                                color: AppTheme.gold, size: 18),
+                          ] else
                             const Icon(Icons.chevron_right,
                                 color: Color(0xFF4A6B85), size: 18),
                         ],
@@ -629,12 +719,16 @@ class _SoundSheet extends StatelessWidget {
 class _SheetRow extends StatelessWidget {
   final String name;
   final bool isSelected;
+  final bool isPlaying;
   final VoidCallback onTap;
+  final VoidCallback onPlayTap;
 
   const _SheetRow({
     required this.name,
     required this.isSelected,
+    required this.isPlaying,
     required this.onTap,
+    required this.onPlayTap,
   });
 
   @override
@@ -643,7 +737,7 @@ class _SheetRow extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
               ? AppTheme.primaryBlue.withValues(alpha: 0.1)
@@ -666,17 +760,46 @@ class _SheetRow extends StatelessWidget {
               child: Text(
                 name,
                 style: TextStyle(
-                  color:
-                      isSelected ? AppTheme.onSurface : const Color(0xFF8BAFC9),
+                  color: isSelected
+                      ? AppTheme.onSurface
+                      : const Color(0xFF8BAFC9),
                   fontWeight:
                       isSelected ? FontWeight.w600 : FontWeight.normal,
                   fontSize: 14,
                 ),
               ),
             ),
-            if (isSelected)
+            GestureDetector(
+              onTap: onPlayTap,
+              child: Container(
+                width: 32,
+                height: 32,
+                margin: const EdgeInsets.only(left: 8),
+                decoration: BoxDecoration(
+                  color: isPlaying
+                      ? AppTheme.primaryBlue.withValues(alpha: 0.2)
+                      : const Color(0xFF0D1B2A),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isPlaying
+                        ? AppTheme.primaryBlue
+                        : const Color(0xFF1E3A52),
+                  ),
+                ),
+                child: Icon(
+                  isPlaying ? Icons.stop : Icons.play_arrow,
+                  color: isPlaying
+                      ? AppTheme.primaryBlue
+                      : const Color(0xFF4A6B85),
+                  size: 18,
+                ),
+              ),
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 8),
               const Icon(Icons.check_circle,
                   color: AppTheme.primaryBlue, size: 18),
+            ],
           ],
         ),
       ),
@@ -891,56 +1014,234 @@ class _Section extends StatelessWidget {
   }
 }
 
-class _ZmanSelector extends StatelessWidget {
-  final ZmanType selected;
-  final ValueChanged<ZmanType> onChanged;
+// ─── Name Header ─────────────────────────────────────────────────────────────
 
-  const _ZmanSelector({required this.selected, required this.onChanged});
+class _NameHeader extends StatelessWidget {
+  final TextEditingController controller;
+
+  const _NameHeader({required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    final categories = ZmanCategory.values;
-
     return Column(
-      children: categories.map((cat) {
-        final zmanim =
-            ZmanType.values.where((z) => z.category == cat).toList();
-        final catName = switch (cat) {
-          ZmanCategory.morning => 'Matin',
-          ZmanCategory.afternoon => 'Après-midi',
-          ZmanCategory.evening => 'Soir',
-          ZmanCategory.night => 'Nuit',
-        };
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 6, left: 4),
-              child: Text(catName,
-                  style: const TextStyle(
-                      color: Color(0xFF4A6B85),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500)),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'NOM DU RÉVEIL',
+          style: TextStyle(
+            color: Color(0xFF4A6B85),
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: controller,
+          style: const TextStyle(
+            color: AppTheme.onSurface,
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.3,
+          ),
+          decoration: InputDecoration(
+            hintText: 'Ex: Avant Netz HaChamah',
+            hintStyle: TextStyle(
+              color: AppTheme.onSurface.withValues(alpha: 0.2),
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.3,
             ),
-            ...zmanim.map((z) => _ZmanOption(
-                  zman: z,
-                  isSelected: z == selected,
-                  onTap: () => onChanged(z),
-                )),
-          ],
-        );
-      }).toList(),
+            filled: false,
+            border: InputBorder.none,
+            enabledBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF1E3A52), width: 1),
+            ),
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: AppTheme.primaryBlue, width: 1.5),
+            ),
+            errorBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFFFF6B6B), width: 1.5),
+            ),
+            focusedErrorBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFFFF6B6B), width: 1.5),
+            ),
+            contentPadding: const EdgeInsets.only(bottom: 8),
+          ),
+          validator: (v) =>
+              v == null || v.trim().isEmpty ? 'Nom requis' : null,
+          textCapitalization: TextCapitalization.sentences,
+        ),
+      ],
     );
   }
 }
 
-class _ZmanOption extends StatelessWidget {
+// ─── Zman Button ──────────────────────────────────────────────────────────────
+
+class _ZmanButton extends StatelessWidget {
+  final ZmanType selected;
+  final VoidCallback onTap;
+
+  const _ZmanButton({required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected.color.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected.color.withValues(alpha: 0.35),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: selected.color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(selected.icon, color: selected.color, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    selected.hebrewName,
+                    style: TextStyle(
+                      color: selected.color,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    selected.frenchName,
+                    style: const TextStyle(
+                      color: Color(0xFF8BAFC9),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.expand_more,
+                color: selected.color.withValues(alpha: 0.6), size: 22),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Zman Bottom Sheet ────────────────────────────────────────────────────────
+
+class _ZmanSheet extends StatelessWidget {
+  final ZmanType selected;
+  final ValueChanged<ZmanType> onChanged;
+
+  const _ZmanSheet({required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 4),
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E3A52),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+            child: Row(
+              children: [
+                const Text(
+                  'CHOISIR UN ZMAN',
+                  style: TextStyle(
+                    color: Color(0xFF8BAFC9),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const Icon(Icons.close,
+                      color: Color(0xFF4A6B85), size: 20),
+                ),
+              ],
+            ),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: ZmanCategory.values.map((cat) {
+                  final zmanim = ZmanType.values
+                      .where((z) => z.category == cat)
+                      .toList();
+                  final catName = switch (cat) {
+                    ZmanCategory.morning => 'Matin',
+                    ZmanCategory.afternoon => 'Après-midi',
+                    ZmanCategory.evening => 'Soir',
+                    ZmanCategory.night => 'Nuit',
+                  };
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding:
+                            const EdgeInsets.only(top: 16, bottom: 8, left: 2),
+                        child: Text(
+                          catName.toUpperCase(),
+                          style: const TextStyle(
+                            color: Color(0xFF4A6B85),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                      ...zmanim.map((z) => _ZmanSheetRow(
+                            zman: z,
+                            isSelected: z == selected,
+                            onTap: () => onChanged(z),
+                          )),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ZmanSheetRow extends StatelessWidget {
   final ZmanType zman;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _ZmanOption(
+  const _ZmanSheetRow(
       {required this.zman, required this.isSelected, required this.onTap});
 
   @override
@@ -949,11 +1250,11 @@ class _ZmanOption extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
           color: isSelected
               ? zman.color.withValues(alpha: 0.1)
-              : AppTheme.cardDark,
+              : AppTheme.surfaceDark,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
@@ -972,22 +1273,25 @@ class _ZmanOption extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(zman.hebrewName,
-                      style: TextStyle(
-                          color:
-                              isSelected ? zman.color : AppTheme.onSurface,
-                          fontSize: 14,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.normal)),
-                  Text(zman.frenchName,
-                      style: const TextStyle(
-                          color: Color(0xFF4A6B85), fontSize: 11)),
+                  Text(
+                    zman.hebrewName,
+                    style: TextStyle(
+                      color: isSelected ? zman.color : AppTheme.onSurface,
+                      fontSize: 14,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                  Text(
+                    zman.frenchName,
+                    style: const TextStyle(
+                        color: Color(0xFF4A6B85), fontSize: 11),
+                  ),
                 ],
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_circle, color: zman.color, size: 20),
+              Icon(Icons.check_circle, color: zman.color, size: 18),
           ],
         ),
       ),
