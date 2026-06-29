@@ -6,7 +6,7 @@
 .pub-cache/
 .pub/
 build/
-pubspec.lock
+#pubspec.lock
 
 # Android
 android/local.properties
