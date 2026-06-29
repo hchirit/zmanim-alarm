@@ -25,10 +25,6 @@ class SettingsProvider extends ChangeNotifier {
     _location = await _locationSvc.getSavedLocation();
     _loaded = true;
     notifyListeners();
-
-    if (_useGPS) {
-      await refreshGPSLocation();
-    }
   }
 
   Future<void> refreshGPSLocation() async {

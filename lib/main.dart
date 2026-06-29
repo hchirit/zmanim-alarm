@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/alarm_provider.dart';
 import 'providers/settings_provider.dart';
 import 'screens/alarm_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'services/alarm_service.dart';
 import 'theme/app_theme.dart';
 
@@ -16,10 +18,6 @@ void main() async {
   await initializeDateFormatting('fr_FR', null);
   await initializeDateFormatting('en_US', null);
   await initializeDateFormatting('he', null);
-
-  await AlarmService.instance.requestNotificationPermission();
-  await AlarmService.instance.requestExactAlarmPermission();
-  await AlarmService.instance.requestBatteryExemption();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -91,6 +89,7 @@ class _AppStartup extends StatefulWidget {
 
 class _AppStartupState extends State<_AppStartup> {
   bool _ready = false;
+  bool _showOnboarding = false;
 
   @override
   void initState() {
@@ -102,7 +101,6 @@ class _AppStartupState extends State<_AppStartup> {
     await AlarmService.instance.initialize();
 
     final settingsProvider = context.read<SettingsProvider>();
-    final alarmProvider = context.read<AlarmProvider>();
 
     await Future.delayed(const Duration(milliseconds: 100));
 
@@ -113,14 +111,34 @@ class _AppStartupState extends State<_AppStartup> {
       });
     }
 
+    final prefs = await SharedPreferences.getInstance();
+    final onboardingDone = prefs.getBool('onboarding_done') ?? false;
+
+    if (!onboardingDone) {
+      if (mounted) setState(() => _showOnboarding = true);
+      return;
+    }
+
+    await _finishStartup();
+  }
+
+  Future<void> _finishStartup() async {
+    final alarmProvider = context.read<AlarmProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
     await alarmProvider.loadAlarms();
     await alarmProvider.rescheduleAll();
-
-    if (mounted) setState(() => _ready = true);
+    if (mounted) setState(() { _ready = true; _showOnboarding = false; });
+    // Refresh GPS after UI is shown — évite une dialog GPS pendant l'onboarding
+    if (settingsProvider.useGPS) {
+      settingsProvider.refreshGPSLocation();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_showOnboarding) {
+      return OnboardingScreen(onComplete: _finishStartup);
+    }
     return _ready ? const HomeScreen() : _buildSplash();
   }
 

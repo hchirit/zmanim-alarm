@@ -254,6 +254,65 @@ class AppLocalizations {
   // ── Écran Zmanim ─────────────────────────────────────────────────────────────
   String get today => _t("Aujourd'hui", 'Today', 'היום');
   String get next => _t('Suivant', 'Next', 'הבא');
+
+  // ── Onboarding ───────────────────────────────────────────────────────────────
+  String get onboardingWelcomeTitle => _t(
+    'Bienvenue dans\nAlarmes Zmanim',
+    'Welcome to\nZmanim Alarms',
+    'ברוכים הבאים\nלאזעקות זמנים',
+  );
+  String get onboardingWelcomeBody => _t(
+    'Cette application déclenche des alarmes aux heures liturgiques juives (zmanim). Pour fonctionner correctement, elle nécessite votre autorisation pour trois fonctionnalités essentielles.',
+    'This app triggers alarms at Jewish prayer times (zmanim). To work properly, it needs your permission for three essential features.',
+    'אפליקציה זו מפעילה אזעקות בזמני התפילה היהודיים (זמנים). כדי לפעול כראוי, היא זקוקה לאישורך לשלוש תכונות חיוניות.',
+  );
+  String get onboardingWelcomeBtn =>
+      _t('Commencer', 'Get started', 'בואו נתחיל');
+
+  String get onboardingNotifTitle =>
+      _t('Notifications', 'Notifications', 'התראות');
+  String get onboardingNotifBody => _t(
+    'Les alarmes s\'affichent sous forme de notifications sur votre écran. Sans cette autorisation, vous ne serez pas alerté à l\'heure des prières.',
+    'Alarms appear as notifications on your screen. Without this permission, you won\'t be alerted at prayer times.',
+    'אזעקות מוצגות כהתראות על המסך. ללא הרשאה זו, לא תקבל התראה בזמני התפילה.',
+  );
+  String get onboardingNotifBtn =>
+      _t('Activer les notifications', 'Enable notifications', 'אפשר התראות');
+
+  String get onboardingAlarmTitle =>
+      _t('Alarmes précises', 'Precise alarms', 'אזעקות מדויקות');
+  String get onboardingAlarmBody => _t(
+    'Android doit pouvoir déclencher vos alarmes à l\'heure exacte des zmanim, même lorsque le téléphone est en veille depuis longtemps. Sans cette autorisation, les alarmes peuvent sonner en retard.',
+    'Android must be able to trigger your alarms at the exact zmanim time, even when the phone has been asleep for a long time. Without this, alarms may ring late.',
+    'אנדרואיד צריך להיות מסוגל להפעיל את האזעקות בזמן המדויק של הזמנים, גם כשהטלפון ישן זמן רב. ללא הרשאה זו, האזעקות עלולות לצלצל באיחור.',
+  );
+  String get onboardingAlarmBtn => _t(
+    'Autoriser les alarmes précises',
+    'Allow precise alarms',
+    'אפשר אזעקות מדויקות',
+  );
+
+  String get onboardingBatteryTitle =>
+      _t('Fonctionnement en arrière-plan', 'Background operation', 'פעולה ברקע');
+  String get onboardingBatteryBody => _t(
+    'Sur Xiaomi, Samsung et d\'autres appareils, le système peut fermer l\'application pour économiser la batterie — empêchant vos alarmes de sonner. Désactivez cette restriction pour garantir un réveil fiable.',
+    'On Xiaomi, Samsung, and other devices, the system may kill the app to save battery — preventing your alarms from ringing. Disable this restriction to ensure reliable wake-ups.',
+    'במכשירי שיאומי, סמסונג ואחרים, המערכת עלולה לסגור את האפליקציה לחיסכון בסוללה — ולמנוע מהאזעקות לצלצל. בטל הגבלה זו להבטחת אזעקות אמינות.',
+  );
+  String get onboardingBatteryBtn =>
+      _t('Désactiver les restrictions', 'Disable restrictions', 'בטל הגבלות');
+
+  String get onboardingDoneTitle =>
+      _t('Tout est prêt !', 'All set!', 'הכל מוכן!');
+  String get onboardingDoneBody => _t(
+    'Vos alarmes zmanim sont prêtes à fonctionner. Vous pouvez modifier ces autorisations à tout moment dans les paramètres de votre téléphone.',
+    'Your zmanim alarms are ready to go. You can change these permissions at any time in your phone\'s settings.',
+    'אזעקות הזמנים שלך מוכנות לפעולה. ניתן לשנות הרשאות אלו בכל עת בהגדרות הטלפון.',
+  );
+  String get onboardingDoneBtn => _t('Commencer', 'Start', 'התחל');
+
+  String get onboardingStepOf =>
+      _t('Étape', 'Step', 'שלב'); // usage: "Étape 1 / 3"
 }
 
 class _AppLocalizationsDelegate
