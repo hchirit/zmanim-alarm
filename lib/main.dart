@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
+import 'l10n/app_localizations.dart';
 import 'providers/alarm_provider.dart';
 import 'providers/settings_provider.dart';
 import 'screens/alarm_screen.dart';
@@ -12,15 +13,14 @@ import 'theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize French locale for date formatting
   await initializeDateFormatting('fr_FR', null);
+  await initializeDateFormatting('en_US', null);
+  await initializeDateFormatting('he', null);
 
-  // Request permissions before runApp (pas besoin du contexte)
   await AlarmService.instance.requestNotificationPermission();
   await AlarmService.instance.requestExactAlarmPermission();
   await AlarmService.instance.requestBatteryExemption();
 
-  // Force portrait orientation
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -48,26 +48,35 @@ class ZmanimAlarmApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SettingsProvider()..load()),
         ChangeNotifierProvider(create: (_) => AlarmProvider()),
       ],
-      // ValueListenableBuilder ici (au-dessus de _AppStartup) pour que
-      // AlarmScreen ne soit jamais recréé quand _AppStartup rebuilde.
-      child: ValueListenableBuilder<ActiveRingInfo?>(
-        valueListenable: AlarmService.activeRing,
-        builder: (context, ring, child) {
-          if (ring != null) {
-            return MaterialApp(
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, _) {
+          final locale = Locale(settings.loaded ? settings.locale : 'fr');
+          return ValueListenableBuilder<ActiveRingInfo?>(
+            valueListenable: AlarmService.activeRing,
+            builder: (context, ring, child) {
+              if (ring != null) {
+                return MaterialApp(
+                  debugShowCheckedModeBanner: false,
+                  theme: AppTheme.darkTheme,
+                  locale: locale,
+                  localizationsDelegates: AppLocalizations.localizationsDelegates,
+                  supportedLocales: AppLocalizations.supportedLocales,
+                  home: AlarmScreen(settings: ring.settings, alarm: ring.alarm),
+                );
+              }
+              return child!;
+            },
+            child: MaterialApp(
+              title: 'Alarmes Zmanim',
               debugShowCheckedModeBanner: false,
               theme: AppTheme.darkTheme,
-              home: AlarmScreen(settings: ring.settings, alarm: ring.alarm),
-            );
-          }
-          return child!;
+              locale: locale,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const _AppStartup(),
+            ),
+          );
         },
-        child: MaterialApp(
-          title: 'Alarmes Zmanim',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.darkTheme,
-          home: const _AppStartup(),
-        ),
       ),
     );
   }
@@ -90,14 +99,11 @@ class _AppStartupState extends State<_AppStartup> {
   }
 
   Future<void> _init() async {
-    // Initialiser le service ici pour que le navigatorKey soit prêt
-    // et que AlarmScreen puisse s'afficher si l'alarme sonne au démarrage.
     await AlarmService.instance.initialize();
 
     final settingsProvider = context.read<SettingsProvider>();
     final alarmProvider = context.read<AlarmProvider>();
 
-    // Wait for settings to load
     await Future.delayed(const Duration(milliseconds: 100));
 
     if (!settingsProvider.loaded) {
@@ -107,7 +113,6 @@ class _AppStartupState extends State<_AppStartup> {
       });
     }
 
-    // Reschedule all alarms on app start
     await alarmProvider.loadAlarms();
     await alarmProvider.rescheduleAll();
 

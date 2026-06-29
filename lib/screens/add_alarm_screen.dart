@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,10 +6,12 @@ import 'package:file_selector/file_selector.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:audioplayers/audioplayers.dart';
+import '../l10n/app_localizations.dart';
 import '../models/alarm.dart';
 import '../models/alarm_sound.dart';
 import '../models/zman_type.dart';
 import '../providers/alarm_provider.dart';
+import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
 
 class AddAlarmScreen extends StatefulWidget {
@@ -52,7 +55,6 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
   static String _formatSoundName(String path) {
     final filename = path.split('/').last;
     if (kSoundLabels.containsKey(filename)) return kSoundLabels[filename]!;
-    // Fallback auto-format pour les nouveaux fichiers non déclarés dans kSoundLabels
     final noExt = filename.contains('.')
         ? filename.substring(0, filename.lastIndexOf('.'))
         : filename;
@@ -62,15 +64,9 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
         .join(' ');
   }
 
-  String? get _soundDisplayName {
-    if (_customSoundPath == null) return null;
-    if (_sound == AlarmSound.custom) {
-      return _customSoundName ?? _customSoundPath!.split('/').last;
-    }
-    return _formatSoundName(_customSoundPath!);
-  }
-
   Future<void> _showZmanBottomSheet() async {
+    final l10n = AppLocalizations.of(context);
+    final locale = context.read<SettingsProvider>().locale;
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppTheme.cardDark,
@@ -83,6 +79,8 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
       ),
       builder: (ctx) => _ZmanSheet(
         selected: _selectedZman,
+        locale: locale,
+        l10n: l10n,
         onChanged: (z) {
           setState(() => _selectedZman = z);
           Navigator.pop(ctx);
@@ -151,7 +149,6 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
       _customSoundPath = a.customSoundPath;
       _customSoundName = null;
     } else {
-      // Ancienne alarme (classic/gentle/shofar/…) → migration vers chemin asset
       _sound = AlarmSound.bundled;
       _customSoundPath = a.sound.legacyAssetPath;
       _customSoundName = null;
@@ -175,6 +172,7 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
   }
 
   Future<void> _pickCustomSound() async {
+    final l10n = AppLocalizations.of(context);
     try {
       const audioTypes = XTypeGroup(
         label: 'Audio',
@@ -187,7 +185,6 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
       final fileName = xFile.name;
       final ext = fileName.contains('.') ? fileName.split('.').last : 'mp3';
 
-      // Copie dans le répertoire de l'app (gère aussi les content:// URIs)
       final appDir = await getApplicationDocumentsDirectory();
       final destPath =
           '${appDir.path}/alarm_sound_${DateTime.now().millisecondsSinceEpoch}.$ext';
@@ -199,11 +196,10 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
         _customSoundPath = destPath;
         _customSoundName = fileName;
       });
-
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible de lire ce fichier audio')),
+          SnackBar(content: Text(l10n.audioFileError)),
         );
       }
     }
@@ -217,10 +213,11 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
   int get _computedRingDuration => _ringMinutes * 60 + _ringSeconds;
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
     if (_daysOfWeek.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sélectionnez au moins un jour')),
+        SnackBar(content: Text(l10n.selectAtLeastOneDay)),
       );
       return;
     }
@@ -256,10 +253,12 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final locale = context.read<SettingsProvider>().locale;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            widget.alarm == null ? 'Nouvelle alarme' : 'Modifier l\'alarme'),
+        title: Text(widget.alarm == null ? l10n.newAlarm : l10n.editAlarm),
         actions: [
           if (widget.alarm != null)
             IconButton(
@@ -271,18 +270,18 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
                     backgroundColor: AppTheme.cardDark,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
-                    title: const Text('Supprimer',
-                        style: TextStyle(color: AppTheme.onSurface)),
-                    content: Text('Supprimer "${widget.alarm!.name}" ?',
+                    title: Text(l10n.deleteTitle,
+                        style: const TextStyle(color: AppTheme.onSurface)),
+                    content: Text(l10n.deleteConfirm(widget.alarm!.name),
                         style: const TextStyle(color: Color(0xFF8BAFC9))),
                     actions: [
                       TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text('Annuler')),
+                          child: Text(l10n.cancel)),
                       TextButton(
                           onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text('Supprimer',
-                              style: TextStyle(color: Colors.red))),
+                          child: Text(l10n.delete,
+                              style: const TextStyle(color: Colors.red))),
                     ],
                   ),
                 );
@@ -299,22 +298,24 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
           children: [
-            _NameHeader(controller: _nameCtrl),
+            _NameHeader(controller: _nameCtrl, l10n: l10n),
             const SizedBox(height: 28),
             _Section(
-              title: 'Zman',
+              title: l10n.sectionZman,
               child: _ZmanButton(
                 selected: _selectedZman,
+                locale: locale,
                 onTap: _showZmanBottomSheet,
               ),
             ),
             const SizedBox(height: 16),
             _Section(
-              title: 'Décalage',
+              title: l10n.sectionOffset,
               child: _OffsetEditor(
                 isBefore: _offsetBefore,
                 hours: _offsetHours,
                 minutes: _offsetMins,
+                l10n: l10n,
                 onBeforeChanged: (v) => setState(() => _offsetBefore = v),
                 onHoursChanged: (v) => setState(() => _offsetHours = v),
                 onMinutesChanged: (v) => setState(() => _offsetMins = v),
@@ -322,15 +323,16 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
             ),
             const SizedBox(height: 16),
             _Section(
-              title: 'Jours',
+              title: l10n.sectionDays,
               child: _DaySelector(
                 selected: _daysOfWeek,
+                l10n: l10n,
                 onChanged: (days) => setState(() => _daysOfWeek = days),
               ),
             ),
             const SizedBox(height: 16),
             _Section(
-              title: 'Sonnerie',
+              title: l10n.sectionRingtone,
               child: _SoundButton(
                 soundType: _sound,
                 soundPath: _customSoundPath,
@@ -340,22 +342,23 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
             ),
             const SizedBox(height: 16),
             _Section(
-              title: 'Durée de la sonnerie',
+              title: l10n.sectionDuration,
               child: _DurationEditor(
                 minutes: _ringMinutes,
                 seconds: _ringSeconds,
+                l10n: l10n,
                 onMinutesChanged: (v) => setState(() => _ringMinutes = v),
                 onSecondsChanged: (v) => setState(() => _ringSeconds = v),
               ),
             ),
             const SizedBox(height: 16),
             _Section(
-              title: 'Options',
+              title: l10n.sectionOptions,
               child: Column(
                 children: [
                   _OptionTile(
                     icon: Icons.vibration,
-                    title: 'Vibration',
+                    title: l10n.vibration,
                     trailing: Switch(
                       value: _vibrate,
                       onChanged: (v) => setState(() => _vibrate = v),
@@ -363,7 +366,7 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
                   ),
                   _OptionTile(
                     icon: Icons.snooze,
-                    title: 'Snooze',
+                    title: l10n.snooze,
                     trailing: DropdownButton<int>(
                       value: _snoozeDuration,
                       dropdownColor: AppTheme.cardDark,
@@ -373,7 +376,7 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
                         return DropdownMenuItem(
                           value: v,
                           child: Text(
-                            v == 0 ? 'Désactivé' : '$v min',
+                            v == 0 ? l10n.disabled : '$v min',
                             style: const TextStyle(color: AppTheme.onSurface),
                           ),
                         );
@@ -395,7 +398,7 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white))
                   : Text(
-                      widget.alarm == null ? 'Créer l\'alarme' : 'Enregistrer',
+                      widget.alarm == null ? l10n.createAlarm : l10n.save,
                       style: const TextStyle(fontSize: 16)),
             ),
           ],
@@ -422,16 +425,18 @@ class _SoundButton extends StatelessWidget {
 
   bool get _hasSelection => soundPath != null;
 
-  String get _label {
-    if (soundPath == null) return 'Choisir sa sonnerie';
-    if (soundType == AlarmSound.custom) {
-      return customSoundName ?? soundPath!.split('/').last;
-    }
-    return _AddAlarmScreenState._formatSoundName(soundPath!);
-  }
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final String label;
+    if (soundPath == null) {
+      label = l10n.chooseRingtone;
+    } else if (soundType == AlarmSound.custom) {
+      label = customSoundName ?? soundPath!.split('/').last;
+    } else {
+      label = _AddAlarmScreenState._formatSoundName(soundPath!);
+    }
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -459,7 +464,7 @@ class _SoundButton extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                _label,
+                label,
                 style: TextStyle(
                   color: _hasSelection
                       ? AppTheme.onSurface
@@ -521,7 +526,6 @@ class _SoundSheetState extends State<_SoundSheet> {
     }
     await _player.stop();
     setState(() => _playingPath = assetPath);
-    // assetPath is "assets/sounds/file.mp3" → AssetSource needs "sounds/file.mp3"
     final src = assetPath.startsWith('assets/')
         ? assetPath.substring('assets/'.length)
         : assetPath;
@@ -551,6 +555,7 @@ class _SoundSheetState extends State<_SoundSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SafeArea(
       child: SingleChildScrollView(
         child: Column(
@@ -570,9 +575,9 @@ class _SoundSheetState extends State<_SoundSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'SONNERIE',
-                    style: TextStyle(
+                  Text(
+                    l10n.ringtoneSheetTitle,
+                    style: const TextStyle(
                       color: Color(0xFF8BAFC9),
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -581,11 +586,11 @@ class _SoundSheetState extends State<_SoundSheet> {
                   ),
                   const SizedBox(height: 12),
                   if (widget.bundledPaths.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       child: Center(
-                        child: Text('Chargement…',
-                            style: TextStyle(color: Color(0xFF4A6B85))),
+                        child: Text(l10n.loading,
+                            style: const TextStyle(color: Color(0xFF4A6B85))),
                       ),
                     )
                   else
@@ -603,8 +608,8 @@ class _SoundSheetState extends State<_SoundSheet> {
                       const Expanded(child: Divider(color: Color(0xFF1E3A52))),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: const Text('ou',
-                            style: TextStyle(
+                        child: Text(l10n.or,
+                            style: const TextStyle(
                                 color: Color(0xFF4A6B85), fontSize: 11)),
                       ),
                       const Expanded(child: Divider(color: Color(0xFF1E3A52))),
@@ -647,7 +652,7 @@ class _SoundSheetState extends State<_SoundSheet> {
                                   widget.isCustom &&
                                           widget.customSoundName != null
                                       ? widget.customSoundName!
-                                      : 'Choisir depuis mon téléphone…',
+                                      : l10n.chooseFromPhone,
                                   style: TextStyle(
                                     color: widget.isCustom
                                         ? AppTheme.onSurface
@@ -660,9 +665,9 @@ class _SoundSheetState extends State<_SoundSheet> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const Text(
-                                  'MP3, OGG, WAV — depuis votre appareil',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.audioFormats,
+                                  style: const TextStyle(
                                       color: Color(0xFF4A6B85), fontSize: 11),
                                 ),
                               ],
@@ -812,12 +817,14 @@ class _SheetRow extends StatelessWidget {
 class _DurationEditor extends StatelessWidget {
   final int minutes;
   final int seconds;
+  final AppLocalizations l10n;
   final ValueChanged<int> onMinutesChanged;
   final ValueChanged<int> onSecondsChanged;
 
   const _DurationEditor({
     required this.minutes,
     required this.seconds,
+    required this.l10n,
     required this.onMinutesChanged,
     required this.onSecondsChanged,
   });
@@ -843,7 +850,6 @@ class _DurationEditor extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Unlimited toggle
           GestureDetector(
             onTap: () {
               if (!_isUnlimited) {
@@ -876,7 +882,7 @@ class _DurationEditor extends StatelessWidget {
                           : const Color(0xFF4A6B85)),
                   const SizedBox(width: 8),
                   Text(
-                    "Jusqu'à désactivation",
+                    l10n.untilDismissed,
                     style: TextStyle(
                       color: _isUnlimited
                           ? AppTheme.primaryBlue
@@ -892,12 +898,11 @@ class _DurationEditor extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Pickers
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _NumberPicker(
-                label: 'Minutes',
+                label: l10n.minutesLabel,
                 value: minutes,
                 min: 0,
                 max: 59,
@@ -920,7 +925,7 @@ class _DurationEditor extends StatelessWidget {
                 ),
               ),
               _NumberPicker(
-                label: 'Secondes',
+                label: l10n.secondsLabel,
                 value: seconds,
                 min: 0,
                 max: 59,
@@ -929,7 +934,6 @@ class _DurationEditor extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Preset chips
           Wrap(
             spacing: 8,
             runSpacing: 6,
@@ -974,8 +978,8 @@ class _DurationEditor extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             _isUnlimited
-                ? 'La sonnerie continue jusqu\'à ce que vous l\'arrêtiez'
-                : 'La sonnerie durera ${minutes > 0 ? '${minutes} min ' : ''}${seconds > 0 ? '${seconds} sec' : ''}',
+                ? l10n.ringContinues
+                : l10n.ringDurationText(minutes, seconds),
             style: const TextStyle(color: Color(0xFF8BAFC9), fontSize: 12),
             textAlign: TextAlign.center,
           ),
@@ -1018,17 +1022,18 @@ class _Section extends StatelessWidget {
 
 class _NameHeader extends StatelessWidget {
   final TextEditingController controller;
+  final AppLocalizations l10n;
 
-  const _NameHeader({required this.controller});
+  const _NameHeader({required this.controller, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'NOM DU RÉVEIL',
-          style: TextStyle(
+        Text(
+          l10n.alarmNameLabel,
+          style: const TextStyle(
             color: Color(0xFF4A6B85),
             fontSize: 10,
             fontWeight: FontWeight.w600,
@@ -1045,7 +1050,7 @@ class _NameHeader extends StatelessWidget {
             letterSpacing: -0.3,
           ),
           decoration: InputDecoration(
-            hintText: 'Ex: Avant Netz HaChamah',
+            hintText: l10n.alarmNameHint,
             hintStyle: TextStyle(
               color: AppTheme.onSurface.withValues(alpha: 0.2),
               fontSize: 22,
@@ -1069,7 +1074,7 @@ class _NameHeader extends StatelessWidget {
             contentPadding: const EdgeInsets.only(bottom: 8),
           ),
           validator: (v) =>
-              v == null || v.trim().isEmpty ? 'Nom requis' : null,
+              v == null || v.trim().isEmpty ? l10n.alarmNameRequired : null,
           textCapitalization: TextCapitalization.sentences,
         ),
       ],
@@ -1081,9 +1086,14 @@ class _NameHeader extends StatelessWidget {
 
 class _ZmanButton extends StatelessWidget {
   final ZmanType selected;
+  final String locale;
   final VoidCallback onTap;
 
-  const _ZmanButton({required this.selected, required this.onTap});
+  const _ZmanButton({
+    required this.selected,
+    required this.locale,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1125,7 +1135,7 @@ class _ZmanButton extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    selected.frenchName,
+                    selected.localizedName(locale),
                     style: const TextStyle(
                       color: Color(0xFF8BAFC9),
                       fontSize: 12,
@@ -1147,9 +1157,16 @@ class _ZmanButton extends StatelessWidget {
 
 class _ZmanSheet extends StatelessWidget {
   final ZmanType selected;
+  final String locale;
+  final AppLocalizations l10n;
   final ValueChanged<ZmanType> onChanged;
 
-  const _ZmanSheet({required this.selected, required this.onChanged});
+  const _ZmanSheet({
+    required this.selected,
+    required this.locale,
+    required this.l10n,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1170,9 +1187,9 @@ class _ZmanSheet extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
             child: Row(
               children: [
-                const Text(
-                  'CHOISIR UN ZMAN',
-                  style: TextStyle(
+                Text(
+                  l10n.chooseZman,
+                  style: const TextStyle(
                     color: Color(0xFF8BAFC9),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -1198,10 +1215,10 @@ class _ZmanSheet extends StatelessWidget {
                       .where((z) => z.category == cat)
                       .toList();
                   final catName = switch (cat) {
-                    ZmanCategory.morning => 'Matin',
-                    ZmanCategory.afternoon => 'Après-midi',
-                    ZmanCategory.evening => 'Soir',
-                    ZmanCategory.night => 'Nuit',
+                    ZmanCategory.morning => l10n.morning,
+                    ZmanCategory.afternoon => l10n.afternoon,
+                    ZmanCategory.evening => l10n.evening,
+                    ZmanCategory.night => l10n.night,
                   };
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1221,6 +1238,7 @@ class _ZmanSheet extends StatelessWidget {
                       ),
                       ...zmanim.map((z) => _ZmanSheetRow(
                             zman: z,
+                            locale: locale,
                             isSelected: z == selected,
                             onTap: () => onChanged(z),
                           )),
@@ -1238,11 +1256,16 @@ class _ZmanSheet extends StatelessWidget {
 
 class _ZmanSheetRow extends StatelessWidget {
   final ZmanType zman;
+  final String locale;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _ZmanSheetRow(
-      {required this.zman, required this.isSelected, required this.onTap});
+  const _ZmanSheetRow({
+    required this.zman,
+    required this.locale,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1283,7 +1306,7 @@ class _ZmanSheetRow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    zman.frenchName,
+                    zman.localizedName(locale),
                     style: const TextStyle(
                         color: Color(0xFF4A6B85), fontSize: 11),
                   ),
@@ -1303,6 +1326,7 @@ class _OffsetEditor extends StatelessWidget {
   final bool isBefore;
   final int hours;
   final int minutes;
+  final AppLocalizations l10n;
   final ValueChanged<bool> onBeforeChanged;
   final ValueChanged<int> onHoursChanged;
   final ValueChanged<int> onMinutesChanged;
@@ -1311,6 +1335,7 @@ class _OffsetEditor extends StatelessWidget {
     required this.isBefore,
     required this.hours,
     required this.minutes,
+    required this.l10n,
     required this.onBeforeChanged,
     required this.onHoursChanged,
     required this.onMinutesChanged,
@@ -1331,12 +1356,12 @@ class _OffsetEditor extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _ToggleButton(
-                  label: 'Avant',
+                  label: l10n.before,
                   selected: isBefore,
                   onTap: () => onBeforeChanged(true)),
               const SizedBox(width: 12),
               _ToggleButton(
-                  label: 'Après',
+                  label: l10n.after,
                   selected: !isBefore,
                   onTap: () => onBeforeChanged(false)),
             ],
@@ -1346,7 +1371,7 @@ class _OffsetEditor extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _NumberPicker(
-                label: 'Heures',
+                label: l10n.hoursLabel,
                 value: hours,
                 min: 0,
                 max: 5,
@@ -1361,7 +1386,7 @@ class _OffsetEditor extends StatelessWidget {
                         fontWeight: FontWeight.w200)),
               ),
               _NumberPicker(
-                label: 'Minutes',
+                label: l10n.minutesLabel,
                 value: minutes,
                 min: 0,
                 max: 59,
@@ -1372,8 +1397,8 @@ class _OffsetEditor extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             hours == 0 && minutes == 0
-                ? 'Exactement au Zman'
-                : '${hours > 0 ? '${hours}h ' : ''}${minutes > 0 ? '${minutes}min ' : ''}${isBefore ? 'avant' : 'après'} le Zman',
+                ? l10n.exactlyAtZman
+                : l10n.offsetText(hours, minutes, isBefore),
             style: const TextStyle(color: Color(0xFF8BAFC9), fontSize: 13),
           ),
         ],
@@ -1474,30 +1499,58 @@ class _NumberPicker extends StatelessWidget {
   }
 }
 
-class _CircleBtn extends StatelessWidget {
+class _CircleBtn extends StatefulWidget {
   final IconData icon;
   final VoidCallback? onTap;
 
   const _CircleBtn({required this.icon, this.onTap});
 
   @override
+  State<_CircleBtn> createState() => _CircleBtnState();
+}
+
+class _CircleBtnState extends State<_CircleBtn> {
+  Timer? _repeatTimer;
+
+  void _startRepeating() {
+    widget.onTap?.call();
+    _repeatTimer = Timer.periodic(const Duration(milliseconds: 80), (_) {
+      widget.onTap?.call();
+    });
+  }
+
+  void _stopRepeating() {
+    _repeatTimer?.cancel();
+    _repeatTimer = null;
+  }
+
+  @override
+  void dispose() {
+    _repeatTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
+      onLongPress: widget.onTap != null ? _startRepeating : null,
+      onLongPressEnd: (_) => _stopRepeating(),
+      onLongPressCancel: _stopRepeating,
       child: Container(
         width: 34,
         height: 34,
         decoration: BoxDecoration(
-          color: onTap != null
+          color: widget.onTap != null
               ? AppTheme.primaryDark
               : AppTheme.primaryDark.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: const Color(0xFF1E3A52)),
         ),
         child: Icon(
-          icon,
+          widget.icon,
           size: 16,
-          color: onTap != null
+          color: widget.onTap != null
               ? AppTheme.primaryBlue
               : const Color(0xFF2D4A62),
         ),
@@ -1508,14 +1561,18 @@ class _CircleBtn extends StatelessWidget {
 
 class _DaySelector extends StatelessWidget {
   final List<int> selected;
+  final AppLocalizations l10n;
   final ValueChanged<List<int>> onChanged;
 
-  const _DaySelector({required this.selected, required this.onChanged});
-
-  static const _days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  const _DaySelector({
+    required this.selected,
+    required this.l10n,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final letters = l10n.dayLetters;
     return Column(
       children: [
         Row(
@@ -1551,7 +1608,7 @@ class _DaySelector extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    _days[i],
+                    letters[i],
                     style: TextStyle(
                       color: isSelected
                           ? AppTheme.primaryBlue
@@ -1572,14 +1629,14 @@ class _DaySelector extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _QuickSelectBtn(
-                label: 'Tous',
+                label: l10n.all,
                 onTap: () => onChanged([1, 2, 3, 4, 5, 6, 7])),
             const SizedBox(width: 8),
             _QuickSelectBtn(
-                label: 'Semaine', onTap: () => onChanged([1, 2, 3, 4, 5])),
+                label: l10n.weekdays, onTap: () => onChanged([1, 2, 3, 4, 5])),
             const SizedBox(width: 8),
             _QuickSelectBtn(
-                label: 'Week-end', onTap: () => onChanged([6, 7])),
+                label: l10n.weekend, onTap: () => onChanged([6, 7])),
           ],
         ),
       ],

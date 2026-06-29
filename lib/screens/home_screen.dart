@@ -1,7 +1,8 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/alarm_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/alarm_service.dart';
@@ -48,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -61,9 +63,9 @@ class _HomeScreenState extends State<HomeScreen>
               indicatorWeight: 2,
               labelColor: AppTheme.gold,
               unselectedLabelColor: const Color(0xFF4A6B85),
-              tabs: const [
-                Tab(text: 'Mes Alarmes'),
-                Tab(text: "Zmanim du Jour"),
+              tabs: [
+                Tab(text: l10n.tabAlarms),
+                Tab(text: l10n.tabZmanim),
               ],
             ),
             Expanded(
@@ -84,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen>
           MaterialPageRoute(builder: (_) => const AddAlarmScreen()),
         ),
         icon: const Icon(Icons.add),
-        label: const Text('Nouvelle alarme'),
+        label: Text(l10n.newAlarm),
       ),
     );
   }
@@ -97,9 +99,10 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final settings = context.watch<SettingsProvider>();
     final timeStr = DateFormat('HH:mm').format(now);
-    final dateStr = DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(now);
+    final dateStr = DateFormat('EEEE d MMMM yyyy', l10n.dateLocale).format(now);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 16, 12),
@@ -174,6 +177,7 @@ class _Header extends StatelessWidget {
 class _NextZmanBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final settings = context.watch<SettingsProvider>();
     if (!settings.loaded) return const SizedBox.shrink();
 
@@ -187,7 +191,6 @@ class _NextZmanBanner extends StatelessWidget {
     ZmanType? nextType;
     DateTime? nextTime;
 
-    // Find next upcoming Zman today or tomorrow
     for (int d = 0; d < 2; d++) {
       final date = now.add(Duration(days: d));
       final zmanim = calc.getAllZmanim(date);
@@ -232,7 +235,7 @@ class _NextZmanBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Prochain Zman',
+                  l10n.nextZman,
                   style: TextStyle(
                     color: nextType.color.withValues(alpha: 0.7),
                     fontSize: 11,
@@ -240,7 +243,7 @@ class _NextZmanBanner extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  nextType.frenchName,
+                  nextType.localizedName(settings.locale),
                   style: const TextStyle(
                     color: AppTheme.onSurface,
                     fontSize: 14,
@@ -262,7 +265,7 @@ class _NextZmanBanner extends StatelessWidget {
                 ),
               ),
               Text(
-                'dans $countdownStr',
+                l10n.inDuration(countdownStr),
                 style: const TextStyle(
                   color: Color(0xFF8BAFC9),
                   fontSize: 11,
@@ -332,6 +335,7 @@ class _PermissionBannerState extends State<_PermissionBanner> {
   @override
   Widget build(BuildContext context) {
     if (_exactAlarmOk && _batteryOk) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
 
     return GestureDetector(
       onTap: () async {
@@ -357,9 +361,7 @@ class _PermissionBannerState extends State<_PermissionBanner> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                !_exactAlarmOk
-                    ? 'Autoriser les alarmes exactes pour que les alarmes sonnent à l\'heure — Appuyez pour activer'
-                    : 'Désactiver l\'optimisation batterie pour ne pas manquer d\'alarmes — Appuyez pour activer',
+                !_exactAlarmOk ? l10n.exactAlarmBanner : l10n.batteryBanner,
                 style: const TextStyle(color: Colors.orange, fontSize: 12),
               ),
             ),
@@ -375,6 +377,7 @@ class _PermissionBannerState extends State<_PermissionBanner> {
 class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -390,19 +393,19 @@ class _EmptyState extends StatelessWidget {
                 color: AppTheme.primaryBlue, size: 40),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Aucune alarme configurée',
-            style: TextStyle(
+          Text(
+            l10n.noAlarmsTitle,
+            style: const TextStyle(
               color: AppTheme.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Appuyez sur + pour créer votre première\nalarme basée sur un Zman',
+          Text(
+            l10n.noAlarmsSubtitle,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF4A6B85), fontSize: 14),
+            style: const TextStyle(color: Color(0xFF4A6B85), fontSize: 14),
           ),
         ],
       ),

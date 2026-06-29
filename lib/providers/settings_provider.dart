@@ -7,18 +7,21 @@ class SettingsProvider extends ChangeNotifier {
 
   LocationData _location = LocationData.jerusalem;
   bool _useGPS = true;
-  String _calculationMethod = 'GRA'; // 'GRA' or 'MGA'
+  String _calculationMethod = 'GRA';
+  String _locale = 'fr';
   bool _loaded = false;
 
   LocationData get location => _location;
   bool get useGPS => _useGPS;
   String get calculationMethod => _calculationMethod;
+  String get locale => _locale;
   bool get loaded => _loaded;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     _useGPS = prefs.getBool('use_gps') ?? true;
     _calculationMethod = prefs.getString('calculation_method') ?? 'GRA';
+    _locale = prefs.getString('locale') ?? 'fr';
     _location = await _locationSvc.getSavedLocation();
     _loaded = true;
     notifyListeners();
@@ -55,6 +58,13 @@ class SettingsProvider extends ChangeNotifier {
     _calculationMethod = method;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('calculation_method', method);
+    notifyListeners();
+  }
+
+  Future<void> setLocale(String locale) async {
+    _locale = locale;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('locale', locale);
     notifyListeners();
   }
 }

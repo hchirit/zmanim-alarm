@@ -156,7 +156,7 @@ class AlarmService {
     final id = (alarm.id ?? 0) * 100 + dayIndex;
     final offsetDesc = alarm.offsetMinutes == 0
         ? alarm.zmanType.frenchName
-        : '${alarm.offsetDescription} ${alarm.zmanType.frenchName}';
+        : '${alarm.offsetDescription()} ${alarm.zmanType.frenchName}';
 
     await alarm_pkg.Alarm.set(
       alarmSettings: alarm_pkg.AlarmSettings(
@@ -208,7 +208,7 @@ class AlarmService {
         androidFullScreenIntent: false,
         notificationSettings: alarm_pkg.NotificationSettings(
           title: '🔔 Test — ${alarm.name}',
-          body: alarm.ringDurationDescription,
+          body: alarm.ringDurationDescription(),
           stopButton: 'Arrêter',
           icon: 'mipmap/ic_launcher',
         ),

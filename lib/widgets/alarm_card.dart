@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../models/alarm.dart';
 import '../models/zman_type.dart';
 import '../providers/alarm_provider.dart';
@@ -15,6 +16,7 @@ class AlarmCard extends StatelessWidget {
   const AlarmCard({super.key, required this.alarm, required this.onTap});
 
   String _nextTriggerText(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final settings = context.read<SettingsProvider>();
     final calc = ZmanimCalculator(
       latitude: settings.location.latitude,
@@ -35,18 +37,20 @@ class AlarmCard extends StatelessWidget {
 
       final diff = trigger.difference(now);
       if (diff.inDays > 0) {
-        return 'Dans ${diff.inDays}j ${diff.inHours % 24}h';
+        return l10n.inDaysHours(diff.inDays, diff.inHours % 24);
       } else if (diff.inHours > 0) {
-        return 'Dans ${diff.inHours}h ${diff.inMinutes % 60}min';
+        return l10n.inHoursMinutes(diff.inHours, diff.inMinutes % 60);
       } else {
-        return 'Dans ${diff.inMinutes} min';
+        return l10n.inMinutes(diff.inMinutes);
       }
     }
-    return 'Inactif';
+    return l10n.inactive;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final locale = context.read<SettingsProvider>().locale;
     final zmanColor = alarm.zmanType.color;
 
     return Dismissible(
@@ -68,19 +72,19 @@ class AlarmCard extends StatelessWidget {
             backgroundColor: AppTheme.cardDark,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('Supprimer l\'alarme',
-                style: TextStyle(color: AppTheme.onSurface)),
-            content: Text('Supprimer "${alarm.name}" ?',
+            title: Text(l10n.deleteAlarmTitle,
+                style: const TextStyle(color: AppTheme.onSurface)),
+            content: Text(l10n.deleteAlarmConfirm(alarm.name),
                 style: const TextStyle(color: Color(0xFF8BAFC9))),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Annuler'),
+                child: Text(l10n.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child:
-                    const Text('Supprimer', style: TextStyle(color: Colors.red)),
+                child: Text(l10n.delete,
+                    style: const TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -89,7 +93,7 @@ class AlarmCard extends StatelessWidget {
       onDismissed: (_) {
         context.read<AlarmProvider>().deleteAlarm(alarm);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"${alarm.name}" supprimée')),
+          SnackBar(content: Text(l10n.alarmDeleted(alarm.name))),
         );
       },
       child: GestureDetector(
@@ -145,14 +149,18 @@ class AlarmCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Text(
-                            alarm.zmanType.hebrewName,
-                            style: TextStyle(
-                              color: alarm.isEnabled
-                                  ? zmanColor
-                                  : const Color(0xFF4A6B85),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                          Flexible(
+                            child: Text(
+                              alarm.zmanType.hebrewName,
+                              style: TextStyle(
+                                color: alarm.isEnabled
+                                    ? zmanColor
+                                    : const Color(0xFF4A6B85),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
                           ),
                           if (alarm.offsetMinutes != 0) ...[
@@ -167,7 +175,7 @@ class AlarmCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                alarm.offsetDescription,
+                                alarm.offsetDescription(locale),
                                 style: TextStyle(
                                   color: alarm.isEnabled
                                       ? zmanColor.withValues(alpha: 0.8)
@@ -190,7 +198,7 @@ class AlarmCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              alarm.daysDescription,
+                              alarm.daysDescription(locale),
                               style: const TextStyle(
                                 color: Color(0xFF4A6B85),
                                 fontSize: 12,
@@ -201,12 +209,16 @@ class AlarmCard extends StatelessWidget {
                           ),
                           if (alarm.isEnabled) ...[
                             const SizedBox(width: 8),
-                            Text(
-                              _nextTriggerText(context),
-                              style: TextStyle(
-                                color: zmanColor.withValues(alpha: 0.7),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                            Flexible(
+                              child: Text(
+                                _nextTriggerText(context),
+                                style: TextStyle(
+                                  color: zmanColor.withValues(alpha: 0.7),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                           ],
@@ -222,8 +234,9 @@ class AlarmCard extends StatelessWidget {
                     if (context.mounted) {
                       final dur = alarm.ringDurationSeconds;
                       final msg = dur > 0
-                          ? 'Sonnerie dans 5 secondes… (s\'arrête après ${alarm.ringDurationDescription})'
-                          : 'Sonnerie dans 5 secondes…';
+                          ? l10n.testingRingWithDuration(
+                              alarm.ringDurationDescription(locale))
+                          : l10n.testingRing;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(msg),
@@ -234,7 +247,7 @@ class AlarmCard extends StatelessWidget {
                   },
                   icon: const Icon(Icons.play_circle_outline,
                       color: Color(0xFF4A6B85), size: 22),
-                  tooltip: 'Tester',
+                  tooltip: l10n.testTooltip,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),

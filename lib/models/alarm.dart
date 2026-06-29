@@ -12,7 +12,7 @@ class Alarm {
   final bool vibrate;
   final AlarmSound sound;
   final int ringDurationSeconds; // 0 = jusqu'à désactivation manuelle
-  final String? customSoundPath; // chemin absolu vers un fichier audio sur l'appareil
+  final String? customSoundPath;
   final DateTime? createdAt;
 
   const Alarm({
@@ -100,28 +100,70 @@ class Alarm {
     );
   }
 
-  String get offsetDescription {
-    if (offsetMinutes == 0) return 'Exactement';
+  String offsetDescription([String locale = 'fr']) {
+    if (offsetMinutes == 0) {
+      switch (locale) {
+        case 'en': return 'Exactly';
+        case 'he': return 'בדיוק';
+        default: return 'Exactement';
+      }
+    }
     final abs = offsetMinutes.abs();
     final h = abs ~/ 60;
     final m = abs % 60;
-    final timeStr = h > 0
-        ? (m > 0 ? '${h}h${m.toString().padLeft(2, '0')}' : '${h}h')
-        : '$m min';
-    return offsetMinutes < 0 ? '$timeStr avant' : '$timeStr après';
+    final String timeStr;
+    if (locale == 'he') {
+      final hPart = h > 0 ? '${h}ש\' ' : '';
+      final mPart = m > 0 ? '${m}ד\'' : '';
+      timeStr = '$hPart$mPart'.trim();
+    } else {
+      timeStr = h > 0
+          ? (m > 0 ? '${h}h${m.toString().padLeft(2, '0')}' : '${h}h')
+          : '$m min';
+    }
+    final before = locale == 'en' ? 'before' : locale == 'he' ? 'לפני' : 'avant';
+    final after  = locale == 'en' ? 'after'  : locale == 'he' ? 'אחרי'  : 'après';
+    return offsetMinutes < 0 ? '$timeStr $before' : '$timeStr $after';
   }
 
-  String get daysDescription {
-    if (daysOfWeek.length == 7) return 'Tous les jours';
-    const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  String daysDescription([String locale = 'fr']) {
+    if (daysOfWeek.length == 7) {
+      switch (locale) {
+        case 'en': return 'Every day';
+        case 'he': return 'כל יום';
+        default: return 'Tous les jours';
+      }
+    }
+    final List<String> names;
+    switch (locale) {
+      case 'he':
+        names = ['שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת', 'ראשון'];
+        break;
+      case 'en':
+        names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        break;
+      default:
+        names = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    }
     final sorted = List<int>.from(daysOfWeek)..sort();
-    return sorted.map((d) => dayNames[d - 1]).join(', ');
+    return sorted.map((d) => names[d - 1]).join(', ');
   }
 
-  String get ringDurationDescription {
-    if (ringDurationSeconds == 0) return "Jusqu'à désactivation";
+  String ringDurationDescription([String locale = 'fr']) {
+    if (ringDurationSeconds == 0) {
+      switch (locale) {
+        case 'en': return 'Until dismissed';
+        case 'he': return 'עד כיבוי';
+        default: return "Jusqu'à désactivation";
+      }
+    }
     final m = ringDurationSeconds ~/ 60;
     final s = ringDurationSeconds % 60;
+    if (locale == 'he') {
+      if (m == 0) return '$s ש\'';
+      if (s == 0) return '$m ד\'';
+      return '$m ד\' $s ש\'';
+    }
     if (m == 0) return '$s sec';
     if (s == 0) return '$m min';
     return '$m min $s sec';

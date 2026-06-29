@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
   flutter_local_notifications: ^17.0.0
   timezone: ^0.9.4
@@ -18,7 +20,7 @@ dependencies:
   shared_preferences: ^2.3.2
   provider: ^6.1.2
   permission_handler: ^11.3.1
-  intl: ^0.19.0
+  intl: ^0.20.2
   alarm: ^4.0.0
   file_selector: ^1.0.0
   path_provider: ^2.1.0

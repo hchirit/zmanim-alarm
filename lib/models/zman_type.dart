@@ -66,6 +66,39 @@ extension ZmanTypeInfo on ZmanType {
     return names[this]!;
   }
 
+  String get englishName {
+    const names = {
+      ZmanType.alotHashachar: 'Alot HaShachar (Dawn)',
+      ZmanType.misheyakir: 'Misheyakir',
+      ZmanType.netzHachamah: 'Netz HaChamah (Sunrise)',
+      ZmanType.sofZmanShmaGRA: 'Sof Zman Shma (GRA)',
+      ZmanType.sofZmanShmaMGA: 'Sof Zman Shma (MGA)',
+      ZmanType.sofZmanTefillaGRA: 'Sof Zman Tefilla (GRA)',
+      ZmanType.sofZmanTefillaMGA: 'Sof Zman Tefilla (MGA)',
+      ZmanType.chatzot: 'Chatzot (Solar Noon)',
+      ZmanType.minchaGedola: 'Mincha Gedola',
+      ZmanType.minchaKetana: 'Mincha Ketana',
+      ZmanType.plagHamincha: 'Plag HaMincha',
+      ZmanType.shkiah: 'Shkiah (Sunset)',
+      ZmanType.tzait8_5: 'Tzait HaKochavim (3 stars)',
+      ZmanType.tzait42: 'Tzait (42 min after sunset)',
+      ZmanType.tzaitRabbenuvTam: 'Tzait Rabbenu Tam (72 min)',
+      ZmanType.chatzotLayla: 'Chatzot HaLayla (Midnight)',
+    };
+    return names[this]!;
+  }
+
+  String localizedName(String locale) {
+    switch (locale) {
+      case 'en':
+        return englishName;
+      case 'he':
+        return hebrewName;
+      default:
+        return frenchName;
+    }
+  }
+
   String get description {
     const descs = {
       ZmanType.alotHashachar: '16.1° sous l\'horizon – l\'aube astronomique',
@@ -86,6 +119,61 @@ extension ZmanTypeInfo on ZmanType {
       ZmanType.chatzotLayla: 'Milieu de la nuit astronomique',
     };
     return descs[this]!;
+  }
+
+  String get _englishDescription {
+    const descs = {
+      ZmanType.alotHashachar: '16.1° below horizon – astronomical dawn',
+      ZmanType.misheyakir: '11.5° below horizon – start of morning mitzvot',
+      ZmanType.netzHachamah: 'Appearance of the upper edge of the sun',
+      ZmanType.sofZmanShmaGRA: '3 proportional hours (GRA) after sunrise',
+      ZmanType.sofZmanShmaMGA: '3 proportional hours (MGA) after dawn',
+      ZmanType.sofZmanTefillaGRA: '4 proportional hours (GRA) after sunrise',
+      ZmanType.sofZmanTefillaMGA: '4 proportional hours (MGA) after dawn',
+      ZmanType.chatzot: 'The sun reaches its zenith',
+      ZmanType.minchaGedola: '30 min after Chatzot',
+      ZmanType.minchaKetana: '9.5 proportional hours after sunrise',
+      ZmanType.plagHamincha: '10.75 proportional hours after sunrise',
+      ZmanType.shkiah: 'Disappearance of the upper edge of the sun',
+      ZmanType.tzait8_5: '8.5° below horizon – 3 stars visible',
+      ZmanType.tzait42: '42 minutes after sunset',
+      ZmanType.tzaitRabbenuvTam: '72 minutes after sunset',
+      ZmanType.chatzotLayla: 'Middle of the astronomical night',
+    };
+    return descs[this]!;
+  }
+
+  String get _hebrewDescription {
+    const descs = {
+      ZmanType.alotHashachar: '16.1° מתחת לאופק – עלות השחר האסטרונומי',
+      ZmanType.misheyakir: '11.5° מתחת לאופק – תחילת מצוות הבוקר',
+      ZmanType.netzHachamah: 'הופעת שפת השמש העליונה',
+      ZmanType.sofZmanShmaGRA: '3 שעות יחסיות (גר"א) אחרי הנץ',
+      ZmanType.sofZmanShmaMGA: '3 שעות יחסיות (מג"א) אחרי עלות השחר',
+      ZmanType.sofZmanTefillaGRA: '4 שעות יחסיות (גר"א) אחרי הנץ',
+      ZmanType.sofZmanTefillaMGA: '4 שעות יחסיות (מג"א) אחרי עלות השחר',
+      ZmanType.chatzot: 'השמש מגיעה לשיאה',
+      ZmanType.minchaGedola: '30 דקות אחרי חצות',
+      ZmanType.minchaKetana: '9.5 שעות יחסיות אחרי הנץ',
+      ZmanType.plagHamincha: '10.75 שעות יחסיות אחרי הנץ',
+      ZmanType.shkiah: 'היעלמות שפת השמש העליונה',
+      ZmanType.tzait8_5: '8.5° מתחת לאופק – 3 כוכבים נראים',
+      ZmanType.tzait42: '42 דקות אחרי השקיעה',
+      ZmanType.tzaitRabbenuvTam: '72 דקות אחרי השקיעה',
+      ZmanType.chatzotLayla: 'אמצע הלילה האסטרונומי',
+    };
+    return descs[this]!;
+  }
+
+  String localizedDescription(String locale) {
+    switch (locale) {
+      case 'en':
+        return _englishDescription;
+      case 'he':
+        return _hebrewDescription;
+      default:
+        return description;
+    }
   }
 
   ZmanCategory get category {
@@ -113,13 +201,13 @@ extension ZmanTypeInfo on ZmanType {
   Color get color {
     switch (category) {
       case ZmanCategory.morning:
-        return const Color(0xFFFFAB40); // Amber sunrise
+        return const Color(0xFFFFAB40);
       case ZmanCategory.afternoon:
-        return const Color(0xFF80DEEA); // Cyan midday
+        return const Color(0xFF80DEEA);
       case ZmanCategory.evening:
-        return const Color(0xFFEF9A9A); // Warm red sunset
+        return const Color(0xFFEF9A9A);
       case ZmanCategory.night:
-        return const Color(0xFFCE93D8); // Purple night
+        return const Color(0xFFCE93D8);
     }
   }
 

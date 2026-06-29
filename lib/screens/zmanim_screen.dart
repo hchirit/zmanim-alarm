@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../models/zman_type.dart';
 import '../providers/settings_provider.dart';
 import '../services/zmanim_calculator.dart';
@@ -20,6 +21,7 @@ class _ZmanimScreenState extends State<ZmanimScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final settings = context.watch<SettingsProvider>();
 
     if (!settings.loaded) {
@@ -35,13 +37,11 @@ class _ZmanimScreenState extends State<ZmanimScreen> {
     final zmanim = calc.getAllZmanim(_selectedDate);
     final now = DateTime.now();
 
-    // Sort by time
     final sorted = zmanim.entries
         .where((e) => e.value != null)
         .toList()
       ..sort((a, b) => a.value!.compareTo(b.value!));
 
-    // Find next upcoming
     ZmanType? nextType;
     for (final e in sorted) {
       if (e.value!.isAfter(now)) {
@@ -55,6 +55,7 @@ class _ZmanimScreenState extends State<ZmanimScreen> {
         _DatePicker(
           date: _selectedDate,
           onChanged: (d) => setState(() => _selectedDate = d),
+          l10n: l10n,
         ),
         Expanded(
           child: ListView.builder(
@@ -73,6 +74,8 @@ class _ZmanimScreenState extends State<ZmanimScreen> {
                 time: entry.value!,
                 isNext: isNext,
                 isPast: isPast,
+                locale: settings.locale,
+                l10n: l10n,
               );
             },
           ),
@@ -85,8 +88,13 @@ class _ZmanimScreenState extends State<ZmanimScreen> {
 class _DatePicker extends StatelessWidget {
   final DateTime date;
   final ValueChanged<DateTime> onChanged;
+  final AppLocalizations l10n;
 
-  const _DatePicker({required this.date, required this.onChanged});
+  const _DatePicker({
+    required this.date,
+    required this.onChanged,
+    required this.l10n,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -128,8 +136,8 @@ class _DatePicker extends StatelessWidget {
                 children: [
                   Text(
                     isToday
-                        ? "Aujourd'hui"
-                        : DateFormat('EEEE', 'fr_FR').format(date),
+                        ? l10n.today
+                        : DateFormat('EEEE', l10n.dateLocale).format(date),
                     style: TextStyle(
                       color: isToday ? AppTheme.gold : const Color(0xFF8BAFC9),
                       fontSize: 12,
@@ -137,7 +145,7 @@ class _DatePicker extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    DateFormat('d MMMM yyyy', 'fr_FR').format(date),
+                    DateFormat('d MMMM yyyy', l10n.dateLocale).format(date),
                     style: const TextStyle(
                       color: AppTheme.onSurface,
                       fontSize: 15,
@@ -164,12 +172,16 @@ class _ZmanRow extends StatelessWidget {
   final DateTime time;
   final bool isNext;
   final bool isPast;
+  final String locale;
+  final AppLocalizations l10n;
 
   const _ZmanRow({
     required this.zmanType,
     required this.time,
     required this.isNext,
     required this.isPast,
+    required this.locale,
+    required this.l10n,
   });
 
   @override
@@ -222,7 +234,7 @@ class _ZmanRow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    zmanType.frenchName,
+                    zmanType.localizedDescription(locale),
                     style: TextStyle(
                       color: isPast
                           ? const Color(0xFF1E3A52)
@@ -254,7 +266,7 @@ class _ZmanRow extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      'Suivant',
+                      l10n.next,
                       style: TextStyle(
                         color: zmanType.color,
                         fontSize: 10,
