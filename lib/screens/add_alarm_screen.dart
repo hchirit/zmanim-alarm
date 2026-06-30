@@ -66,7 +66,7 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
 
   Future<void> _showZmanBottomSheet() async {
     final l10n = AppLocalizations.of(context);
-    final locale = context.read<SettingsProvider>().locale;
+    final settings = context.read<SettingsProvider>();
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Theme.of(context).appCard,
@@ -79,7 +79,8 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
       ),
       builder: (ctx) => _ZmanSheet(
         selected: _selectedZman,
-        locale: locale,
+        locale: settings.locale,
+        calculationMethod: settings.calculationMethod,
         l10n: l10n,
         onChanged: (z) {
           setState(() => _selectedZman = z);
@@ -1148,12 +1149,14 @@ class _ZmanButton extends StatelessWidget {
 class _ZmanSheet extends StatelessWidget {
   final ZmanType selected;
   final String locale;
+  final String calculationMethod;
   final AppLocalizations l10n;
   final ValueChanged<ZmanType> onChanged;
 
   const _ZmanSheet({
     required this.selected,
     required this.locale,
+    required this.calculationMethod,
     required this.l10n,
     required this.onChanged,
   });
@@ -1233,6 +1236,7 @@ class _ZmanSheet extends StatelessWidget {
                       ...zmanim.map((z) => _ZmanSheetRow(
                             zman: z,
                             locale: locale,
+                            calculationMethod: calculationMethod,
                             isSelected: z == selected,
                             onTap: () => onChanged(z),
                           )),
@@ -1251,18 +1255,24 @@ class _ZmanSheet extends StatelessWidget {
 class _ZmanSheetRow extends StatelessWidget {
   final ZmanType zman;
   final String locale;
+  final String calculationMethod;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _ZmanSheetRow({
     required this.zman,
     required this.locale,
+    required this.calculationMethod,
     required this.isSelected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final methodKey = zman.calculationMethodKey;
+    final isPreferred = zman.isPreferredMethod(calculationMethod);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1271,38 +1281,77 @@ class _ZmanSheetRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? zman.color.withValues(alpha: 0.1)
-              : Theme.of(context).appDeep,
+              : t.appDeep,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? zman.color.withValues(alpha: 0.5)
-                : Theme.of(context).appBorder,
+                : t.appBorder,
             width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Row(
           children: [
             Icon(zman.icon,
-                color: isSelected ? zman.color : Theme.of(context).appSubtle,
+                color: isSelected ? zman.color : t.appSubtle,
                 size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    zman.hebrewName,
-                    style: TextStyle(
-                      color: isSelected ? zman.color : Theme.of(context).appText,
-                      fontSize: 14,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.normal,
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          zman.hebrewName,
+                          style: TextStyle(
+                            color: isSelected ? zman.color : t.appText,
+                            fontSize: 14,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                      if (methodKey != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: isPreferred
+                                ? zman.color.withValues(alpha: 0.15)
+                                : t.appChipBg,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: isPreferred
+                                  ? zman.color.withValues(alpha: 0.5)
+                                  : t.appBorder,
+                            ),
+                          ),
+                          child: Text(
+                            methodKey,
+                            style: TextStyle(
+                              color: isPreferred ? zman.color : t.appSubtle,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        if (isPreferred) ...[
+                          const SizedBox(width: 4),
+                          Icon(Icons.star,
+                              size: 11,
+                              color: zman.color.withValues(alpha: 0.6)),
+                        ],
+                      ],
+                    ],
                   ),
                   Text(
                     zman.localizedName(locale),
-                    style: TextStyle(
-                        color: Theme.of(context).appSubtle, fontSize: 11),
+                    style: TextStyle(color: t.appSubtle, fontSize: 11),
                   ),
                 ],
               ),

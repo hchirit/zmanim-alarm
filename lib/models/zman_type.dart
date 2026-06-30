@@ -211,6 +211,25 @@ extension ZmanTypeInfo on ZmanType {
     }
   }
 
+  /// 'GRA', 'MGA', ou null si ce zman ne dépend pas de la méthode de calcul.
+  String? get calculationMethodKey {
+    switch (this) {
+      case ZmanType.sofZmanShmaGRA:
+      case ZmanType.sofZmanTefillaGRA:
+        return 'GRA';
+      case ZmanType.sofZmanShmaMGA:
+      case ZmanType.sofZmanTefillaMGA:
+        return 'MGA';
+      default:
+        return null;
+    }
+  }
+
+  /// true si ce zman n'est pas spécifique à une méthode, ou s'il correspond
+  /// à la méthode préférée de l'utilisateur.
+  bool isPreferredMethod(String method) =>
+      calculationMethodKey == null || calculationMethodKey == method;
+
   IconData get icon {
     switch (this) {
       case ZmanType.alotHashachar:

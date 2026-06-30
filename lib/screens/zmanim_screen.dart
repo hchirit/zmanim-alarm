@@ -75,6 +75,7 @@ class _ZmanimScreenState extends State<ZmanimScreen> {
                 isNext: isNext,
                 isPast: isPast,
                 locale: settings.locale,
+                method: settings.calculationMethod,
                 l10n: l10n,
               );
             },
@@ -167,6 +168,7 @@ class _ZmanRow extends StatelessWidget {
   final bool isNext;
   final bool isPast;
   final String locale;
+  final String method;
   final AppLocalizations l10n;
 
   const _ZmanRow({
@@ -175,19 +177,22 @@ class _ZmanRow extends StatelessWidget {
     required this.isNext,
     required this.isPast,
     required this.locale,
+    required this.method,
     required this.l10n,
   });
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
+    final methodKey = zmanType.calculationMethodKey;
+    final isPreferred = zmanType.isPreferredMethod(method);
     final color = isPast
         ? t.appPastZman
         : isNext
             ? zmanType.color
-            : zmanType.color.withValues(alpha: 0.7);
+            : zmanType.color.withValues(alpha: isPreferred ? 0.7 : 0.4);
 
-    return Container(
+    Widget row = Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
         color: isNext ? zmanType.color.withValues(alpha: 0.08) : t.appCard,
@@ -215,13 +220,46 @@ class _ZmanRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    zmanType.hebrewName,
-                    style: TextStyle(
-                      color: isPast ? t.appPastZman : t.appText,
-                      fontSize: 14,
-                      fontWeight: isNext ? FontWeight.w600 : FontWeight.normal,
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          zmanType.hebrewName,
+                          style: TextStyle(
+                            color: isPast ? t.appPastZman : t.appText,
+                            fontSize: 14,
+                            fontWeight: isNext ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                      if (methodKey != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: isPreferred
+                                ? zmanType.color.withValues(alpha: 0.18)
+                                : t.appChipBg,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: isPreferred
+                                  ? zmanType.color.withValues(alpha: 0.5)
+                                  : t.appBorder,
+                            ),
+                          ),
+                          child: Text(
+                            methodKey,
+                            style: TextStyle(
+                              color: isPreferred ? zmanType.color : t.appSubtle,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   Text(
                     zmanType.localizedDescription(locale),
@@ -241,8 +279,7 @@ class _ZmanRow extends StatelessWidget {
                   style: TextStyle(
                     color: color,
                     fontSize: 18,
-                    fontWeight:
-                        isNext ? FontWeight.w700 : FontWeight.w400,
+                    fontWeight: isNext ? FontWeight.w700 : FontWeight.w400,
                   ),
                 ),
                 if (isNext)
@@ -268,5 +305,11 @@ class _ZmanRow extends StatelessWidget {
         ),
       ),
     );
+
+    // Dimmer légèrement la variante non préférée pour guider visuellement
+    if (methodKey != null && !isPreferred) {
+      row = Opacity(opacity: 0.5, child: row);
+    }
+    return row;
   }
 }

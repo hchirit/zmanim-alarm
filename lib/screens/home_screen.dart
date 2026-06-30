@@ -199,6 +199,7 @@ class _NextZmanBanner extends StatelessWidget {
     );
 
     final now = DateTime.now();
+    final method = settings.calculationMethod;
     ZmanType? nextType;
     DateTime? nextTime;
 
@@ -206,7 +207,10 @@ class _NextZmanBanner extends StatelessWidget {
       final date = now.add(Duration(days: d));
       final zmanim = calc.getAllZmanim(date);
       final sorted = zmanim.entries
-          .where((e) => e.value != null && e.value!.isAfter(now))
+          .where((e) =>
+              e.value != null &&
+              e.value!.isAfter(now) &&
+              e.key.isPreferredMethod(method))
           .toList()
         ..sort((a, b) => a.value!.compareTo(b.value!));
 
