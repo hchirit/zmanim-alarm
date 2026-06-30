@@ -25,16 +25,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  Timer? _clockTimer;
-  DateTime _now = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() => _now = DateTime.now());
-    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await context.read<AlarmProvider>().loadAlarms();
@@ -44,7 +39,6 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _clockTimer?.cancel();
     super.dispose();
   }
 
@@ -55,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen>
       body: SafeArea(
         child: Column(
           children: [
-            _Header(now: _now),
+            const _Header(),
             _PermissionBanner(),
             _NextZmanBanner(),
             TabBar(
@@ -93,18 +87,38 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-class _Header extends StatelessWidget {
-  final DateTime now;
+class _Header extends StatefulWidget {
+  const _Header();
 
-  const _Header({required this.now});
+  @override
+  State<_Header> createState() => _HeaderState();
+}
+
+class _HeaderState extends State<_Header> {
+  DateTime _now = DateTime.now();
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final settings = context.watch<SettingsProvider>();
-    final timeStr = DateFormat('HH:mm').format(now);
-    final dateStr = DateFormat('EEEE d MMMM yyyy', l10n.dateLocale).format(now);
-    final hebrewDate = HebrewDateService.fromGregorian(now);
+    final timeStr = DateFormat('HH:mm').format(_now);
+    final dateStr = DateFormat('EEEE d MMMM yyyy', l10n.dateLocale).format(_now);
+    final hebrewDate = HebrewDateService.fromGregorian(_now);
 
     final t = Theme.of(context);
     return Container(
