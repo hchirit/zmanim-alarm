@@ -37,8 +37,9 @@ class _ZmanimScreenState extends State<ZmanimScreen> {
     final zmanim = calc.getAllZmanim(_selectedDate);
     final now = DateTime.now();
 
+    final method = settings.calculationMethod;
     final sorted = zmanim.entries
-        .where((e) => e.value != null)
+        .where((e) => e.value != null && e.key.isPreferredMethod(method))
         .toList()
       ..sort((a, b) => a.value!.compareTo(b.value!));
 
@@ -185,12 +186,11 @@ class _ZmanRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final methodKey = zmanType.calculationMethodKey;
-    final isPreferred = zmanType.isPreferredMethod(method);
     final color = isPast
         ? t.appPastZman
         : isNext
             ? zmanType.color
-            : zmanType.color.withValues(alpha: isPreferred ? 0.7 : 0.4);
+            : zmanType.color.withValues(alpha: 0.7);
 
     Widget row = Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -238,20 +238,16 @@ class _ZmanRow extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 5, vertical: 1),
                           decoration: BoxDecoration(
-                            color: isPreferred
-                                ? zmanType.color.withValues(alpha: 0.18)
-                                : t.appChipBg,
+                            color: zmanType.color.withValues(alpha: 0.18),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
-                              color: isPreferred
-                                  ? zmanType.color.withValues(alpha: 0.5)
-                                  : t.appBorder,
+                              color: zmanType.color.withValues(alpha: 0.5),
                             ),
                           ),
                           child: Text(
                             methodKey,
                             style: TextStyle(
-                              color: isPreferred ? zmanType.color : t.appSubtle,
+                              color: zmanType.color,
                               fontSize: 9,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.5,
@@ -306,10 +302,6 @@ class _ZmanRow extends StatelessWidget {
       ),
     );
 
-    // Dimmer légèrement la variante non préférée pour guider visuellement
-    if (methodKey != null && !isPreferred) {
-      row = Opacity(opacity: 0.5, child: row);
-    }
     return row;
   }
 }
