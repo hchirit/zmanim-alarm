@@ -145,7 +145,9 @@ class Alarm {
       default:
         names = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
     }
-    final sorted = List<int>.from(daysOfWeek)..sort();
+    // Tri calendrier juif : dimanche (ISO 7) en premier, puis lun–sam (1–6)
+    final sorted = List<int>.from(daysOfWeek)
+      ..sort((a, b) => (a == 7 ? 0 : a).compareTo(b == 7 ? 0 : b));
     return sorted.map((d) => names[d - 1]).join(', ');
   }
 

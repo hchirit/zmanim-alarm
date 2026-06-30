@@ -240,10 +240,11 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
       );
 
       final provider = context.read<AlarmProvider>();
+      final locale = context.read<SettingsProvider>().locale;
       if (widget.alarm == null) {
-        await provider.addAlarm(alarm);
+        await provider.addAlarm(alarm, locale: locale);
       } else {
-        await provider.updateAlarm(alarm);
+        await provider.updateAlarm(alarm, locale: locale);
       }
 
       if (mounted) Navigator.pop(context);
@@ -1628,7 +1629,8 @@ class _DaySelector extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(7, (i) {
-            final day = i + 1;
+            const dayOrder = [7, 1, 2, 3, 4, 5, 6]; // ISO: dim en premier
+            final day = dayOrder[i];
             final isSelected = selected.contains(day);
             return GestureDetector(
               onTap: () {

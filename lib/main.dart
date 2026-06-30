@@ -47,51 +47,66 @@ class ZmanimAlarmApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SettingsProvider()..load()),
         ChangeNotifierProvider(create: (_) => AlarmProvider()),
       ],
-      child: Consumer<SettingsProvider>(
-        builder: (context, settings, _) {
-          final locale = Locale(settings.loaded ? settings.locale : 'fr');
-          final themeMode =
-              settings.darkMode ? ThemeMode.dark : ThemeMode.light;
-          final isDark = settings.darkMode;
-          SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness:
-                isDark ? Brightness.light : Brightness.dark,
-            systemNavigationBarColor:
-                isDark ? const Color(0xFF071018) : const Color(0xFFF5F7FA),
-            systemNavigationBarIconBrightness:
-                isDark ? Brightness.light : Brightness.dark,
-          ));
-          return ValueListenableBuilder<ActiveRingInfo?>(
-            valueListenable: AlarmService.activeRing,
-            builder: (context, ring, child) {
-              if (ring != null) {
-                return MaterialApp(
-                  debugShowCheckedModeBanner: false,
-                  theme: AppTheme.lightTheme,
-                  darkTheme: AppTheme.darkTheme,
-                  themeMode: themeMode,
-                  locale: locale,
-                  localizationsDelegates: AppLocalizations.localizationsDelegates,
-                  supportedLocales: AppLocalizations.supportedLocales,
-                  home: AlarmScreen(settings: ring.settings, alarm: ring.alarm),
-                );
-              }
-              return child!;
-            },
-            child: MaterialApp(
-              title: 'Alarmes Zmanim',
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: themeMode,
-              locale: locale,
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              home: const _AppStartup(),
-            ),
+      child: const _AppRoot(),
+    );
+  }
+}
+
+class _AppRoot extends StatefulWidget {
+  const _AppRoot();
+
+  @override
+  State<_AppRoot> createState() => _AppRootState();
+}
+
+class _AppRootState extends State<_AppRoot> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isDark = Provider.of<SettingsProvider>(context).darkMode;
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      systemNavigationBarColor:
+          isDark ? const Color(0xFF071018) : const Color(0xFFF5F7FA),
+      systemNavigationBarIconBrightness:
+          isDark ? Brightness.light : Brightness.dark,
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final locale = Locale(settings.loaded ? settings.locale : 'fr');
+    final themeMode = settings.darkMode ? ThemeMode.dark : ThemeMode.light;
+
+    return ValueListenableBuilder<ActiveRingInfo?>(
+      valueListenable: AlarmService.activeRing,
+      builder: (context, ring, child) {
+        if (ring != null) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeMode,
+            locale: locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: AlarmScreen(settings: ring.settings, alarm: ring.alarm),
           );
-        },
+        }
+        return child!;
+      },
+      child: MaterialApp(
+        title: 'Alarmes Zmanim',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeMode,
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const _AppStartup(),
       ),
     );
   }
@@ -118,15 +133,7 @@ class _AppStartupState extends State<_AppStartup> {
     await AlarmService.instance.initialize();
 
     final settingsProvider = context.read<SettingsProvider>();
-
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    if (!settingsProvider.loaded) {
-      await Future.doWhile(() async {
-        await Future.delayed(const Duration(milliseconds: 50));
-        return !settingsProvider.loaded;
-      });
-    }
+    await settingsProvider.loadFuture;
 
     final prefs = await SharedPreferences.getInstance();
     final onboardingDone = prefs.getBool('onboarding_done') ?? false;
@@ -143,7 +150,7 @@ class _AppStartupState extends State<_AppStartup> {
     final alarmProvider = context.read<AlarmProvider>();
     final settingsProvider = context.read<SettingsProvider>();
     await alarmProvider.loadAlarms();
-    await alarmProvider.rescheduleAll();
+    await alarmProvider.rescheduleAll(locale: settingsProvider.locale);
     if (mounted) setState(() { _ready = true; _showOnboarding = false; });
     // Refresh GPS after UI is shown — évite une dialog GPS pendant l'onboarding
     if (settingsProvider.useGPS) {

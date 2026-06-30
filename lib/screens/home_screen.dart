@@ -7,7 +7,6 @@ import '../providers/alarm_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/alarm_service.dart';
 import '../services/hebrew_date_service.dart';
-import '../services/zmanim_calculator.dart';
 import '../models/zman_type.dart';
 import '../theme/app_theme.dart';
 import '../widgets/alarm_card.dart';
@@ -206,11 +205,7 @@ class _NextZmanBanner extends StatelessWidget {
     final settings = context.watch<SettingsProvider>();
     if (!settings.loaded) return const SizedBox.shrink();
 
-    final calc = ZmanimCalculator(
-      latitude: settings.location.latitude,
-      longitude: settings.location.longitude,
-      elevation: settings.location.elevation,
-    );
+    final calc = settings.calculator;
 
     final now = DateTime.now();
     final method = settings.calculationMethod;
@@ -345,14 +340,27 @@ class _PermissionBanner extends StatefulWidget {
   State<_PermissionBanner> createState() => _PermissionBannerState();
 }
 
-class _PermissionBannerState extends State<_PermissionBanner> {
+class _PermissionBannerState extends State<_PermissionBanner>
+    with WidgetsBindingObserver {
   bool _exactAlarmOk = true;
   bool _batteryOk = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _check();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _check();
   }
 
   Future<void> _check() async {

@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/location_service.dart';
+import '../services/zmanim_calculator.dart';
 
 class SettingsProvider extends ChangeNotifier {
   final LocationService _locationSvc = LocationService();
+  final Completer<void> _loadCompleter = Completer<void>();
 
   LocationData _location = LocationData.jerusalem;
   bool _useGPS = true;
@@ -11,6 +14,7 @@ class SettingsProvider extends ChangeNotifier {
   String _locale = 'fr';
   bool _darkMode = true;
   bool _loaded = false;
+  ZmanimCalculator? _calculator;
 
   LocationData get location => _location;
   bool get useGPS => _useGPS;
@@ -18,6 +22,16 @@ class SettingsProvider extends ChangeNotifier {
   String get locale => _locale;
   bool get darkMode => _darkMode;
   bool get loaded => _loaded;
+
+  /// Se complète une seule fois quand [load] termine.
+  Future<void> get loadFuture => _loadCompleter.future;
+
+  /// Calculateur mis en cache, invalidé à chaque changement de localisation.
+  ZmanimCalculator get calculator => _calculator ??= ZmanimCalculator(
+        latitude: _location.latitude,
+        longitude: _location.longitude,
+        elevation: _location.elevation,
+      );
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -27,6 +41,8 @@ class SettingsProvider extends ChangeNotifier {
     _darkMode = prefs.getBool('dark_mode') ?? true;
     _location = await _locationSvc.getSavedLocation();
     _loaded = true;
+    _calculator = null;
+    if (!_loadCompleter.isCompleted) _loadCompleter.complete();
     notifyListeners();
   }
 
@@ -34,6 +50,7 @@ class SettingsProvider extends ChangeNotifier {
     final loc = await _locationSvc.getCurrentLocation();
     if (loc != null) {
       _location = loc;
+      _calculator = null;
       await _locationSvc.saveLocation(loc);
       notifyListeners();
     }
@@ -41,6 +58,7 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<void> setManualLocation(LocationData location) async {
     _location = location;
+    _calculator = null;
     await _locationSvc.saveLocation(location);
     notifyListeners();
   }

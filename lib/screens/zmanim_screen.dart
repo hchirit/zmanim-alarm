@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/zman_type.dart';
 import '../providers/settings_provider.dart';
-import '../services/zmanim_calculator.dart';
 import '../theme/app_theme.dart';
 
 class ZmanimScreen extends StatefulWidget {
@@ -28,11 +27,7 @@ class _ZmanimScreenState extends State<ZmanimScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final calc = ZmanimCalculator(
-      latitude: settings.location.latitude,
-      longitude: settings.location.longitude,
-      elevation: settings.location.elevation,
-    );
+    final calc = settings.calculator;
 
     final zmanim = calc.getAllZmanim(_selectedDate);
     final now = DateTime.now();

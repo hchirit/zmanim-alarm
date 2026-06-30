@@ -31,22 +31,22 @@ class AlarmProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> addAlarm(Alarm alarm) async {
+  Future<void> addAlarm(Alarm alarm, {String locale = 'fr'}) async {
     final id = await _db.insertAlarm(alarm);
     final saved = alarm.copyWith(id: id);
     _alarms.add(saved);
     notifyListeners();
-    await _reschedule(saved);
+    await _reschedule(saved, locale: locale);
   }
 
-  Future<void> updateAlarm(Alarm alarm) async {
+  Future<void> updateAlarm(Alarm alarm, {String locale = 'fr'}) async {
     await _db.updateAlarm(alarm);
     final idx = _alarms.indexWhere((a) => a.id == alarm.id);
     if (idx >= 0) {
       _alarms[idx] = alarm;
       notifyListeners();
     }
-    await _reschedule(alarm);
+    await _reschedule(alarm, locale: locale);
   }
 
   Future<void> deleteAlarm(Alarm alarm) async {
@@ -57,19 +57,19 @@ class AlarmProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> toggleAlarm(Alarm alarm) async {
+  Future<void> toggleAlarm(Alarm alarm, {String locale = 'fr'}) async {
     final updated = alarm.copyWith(isEnabled: !alarm.isEnabled);
-    await updateAlarm(updated);
+    await updateAlarm(updated, locale: locale);
   }
 
-  Future<void> rescheduleAll() async {
+  Future<void> rescheduleAll({String locale = 'fr'}) async {
     final location = await _locationSvc.getSavedLocation();
-    await _alarmSvc.scheduleAll(_alarms, location);
+    await _alarmSvc.scheduleAll(_alarms, location, locale: locale);
   }
 
-  Future<void> _reschedule(Alarm alarm) async {
+  Future<void> _reschedule(Alarm alarm, {String locale = 'fr'}) async {
     final location = await _locationSvc.getSavedLocation();
-    await _alarmSvc.scheduleAlarm(alarm, location);
+    await _alarmSvc.scheduleAlarm(alarm, location, locale: locale);
   }
 
   List<Alarm> get enabledAlarms =>

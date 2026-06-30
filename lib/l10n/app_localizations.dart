@@ -104,10 +104,10 @@ class AppLocalizations {
           : ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
   List<String> get dayLetters => locale == 'he'
-      ? ['ב', 'ג', 'ד', 'ה', 'ו', 'ש', 'א']
+      ? ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש']
       : locale == 'en'
-          ? ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-          : ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+          ? ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+          : ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
   // ── Écran ajout alarme ───────────────────────────────────────────────────────
   String get editAlarm => _t('Modifier l\'alarme', 'Edit alarm', 'ערוך אזעקה');

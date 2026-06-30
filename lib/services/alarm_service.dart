@@ -90,6 +90,7 @@ class AlarmService {
     List<Alarm> alarms,
     LocationData location, {
     int daysAhead = 14,
+    String locale = 'fr',
   }) async {
     await alarm_pkg.Alarm.stopAll();
 
@@ -114,7 +115,7 @@ class AlarmService {
         final triggerTime = zmanTime.add(Duration(minutes: alarm.offsetMinutes));
         if (triggerTime.isBefore(now.add(const Duration(seconds: 5)))) continue;
 
-        await _scheduleEntry(alarm, triggerTime, d);
+        await _scheduleEntry(alarm, triggerTime, d, locale);
       }
     }
   }
@@ -123,6 +124,7 @@ class AlarmService {
     Alarm alarm,
     LocationData location, {
     int daysAhead = 14,
+    String locale = 'fr',
   }) async {
     if (alarm.id == null) return;
 
@@ -147,23 +149,23 @@ class AlarmService {
       final triggerTime = zmanTime.add(Duration(minutes: alarm.offsetMinutes));
       if (triggerTime.isBefore(now.add(const Duration(seconds: 5)))) continue;
 
-      await _scheduleEntry(alarm, triggerTime, d);
+      await _scheduleEntry(alarm, triggerTime, d, locale);
     }
   }
 
   Future<void> _scheduleEntry(
-      Alarm alarm, DateTime triggerTime, int dayIndex) async {
+      Alarm alarm, DateTime triggerTime, int dayIndex, String locale) async {
     final id = (alarm.id ?? 0) * 100 + dayIndex;
     final offsetDesc = alarm.offsetMinutes == 0
-        ? alarm.zmanType.frenchName
-        : '${alarm.offsetDescription()} ${alarm.zmanType.frenchName}';
+        ? alarm.zmanType.localizedName(locale)
+        : '${alarm.offsetDescription(locale)} ${alarm.zmanType.localizedName(locale)}';
 
     await alarm_pkg.Alarm.set(
       alarmSettings: alarm_pkg.AlarmSettings(
         id: id,
         dateTime: triggerTime,
         assetAudioPath: _resolveAudioPath(alarm),
-        loopAudio: alarm.ringDurationSeconds == 0, // boucle seulement si durée illimitée
+        loopAudio: alarm.ringDurationSeconds == 0,
         vibrate: alarm.vibrate,
         volume: null,
         fadeDuration: 0,
@@ -171,11 +173,19 @@ class AlarmService {
         notificationSettings: alarm_pkg.NotificationSettings(
           title: alarm.name,
           body: offsetDesc,
-          stopButton: 'Arrêter',
+          stopButton: _stopLabel(locale),
           icon: 'mipmap/ic_launcher',
         ),
       ),
     );
+  }
+
+  String _stopLabel(String locale) {
+    switch (locale) {
+      case 'en': return 'Stop';
+      case 'he': return 'עצור';
+      default: return 'Arrêter';
+    }
   }
 
   Future<void> cancelAlarm(int alarmId, {int daysAhead = 14}) async {
@@ -188,7 +198,7 @@ class AlarmService {
     await alarm_pkg.Alarm.stopAll();
   }
 
-  Future<void> testAlarm(Alarm alarm) async {
+  Future<void> testAlarm(Alarm alarm, {String locale = 'fr'}) async {
     const testId = 999999;
     await alarm_pkg.Alarm.stop(testId);
 
@@ -208,8 +218,8 @@ class AlarmService {
         androidFullScreenIntent: false,
         notificationSettings: alarm_pkg.NotificationSettings(
           title: '🔔 Test — ${alarm.name}',
-          body: alarm.ringDurationDescription(),
-          stopButton: 'Arrêter',
+          body: alarm.ringDurationDescription(locale),
+          stopButton: _stopLabel(locale),
           icon: 'mipmap/ic_launcher',
         ),
       ),

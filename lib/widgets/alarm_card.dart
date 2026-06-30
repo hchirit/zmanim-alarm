@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/alarm.dart';
@@ -6,7 +7,6 @@ import '../models/zman_type.dart';
 import '../providers/alarm_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/alarm_service.dart';
-import '../services/zmanim_calculator.dart';
 import '../theme/app_theme.dart';
 
 class AlarmCard extends StatelessWidget {
@@ -18,11 +18,7 @@ class AlarmCard extends StatelessWidget {
   String _nextTriggerText(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final settings = context.read<SettingsProvider>();
-    final calc = ZmanimCalculator(
-      latitude: settings.location.latitude,
-      longitude: settings.location.longitude,
-      elevation: settings.location.elevation,
-    );
+    final calc = settings.calculator;
 
     final now = DateTime.now();
     for (int d = 0; d < 8; d++) {
@@ -35,14 +31,14 @@ class AlarmCard extends StatelessWidget {
       final trigger = zmanTime.add(Duration(minutes: alarm.offsetMinutes));
       if (trigger.isBefore(now)) continue;
 
+      final timeStr = DateFormat('HH:mm').format(trigger);
       final diff = trigger.difference(now);
-      if (diff.inDays > 0) {
-        return l10n.inDaysHours(diff.inDays, diff.inHours % 24);
-      } else if (diff.inHours > 0) {
-        return l10n.inHoursMinutes(diff.inHours, diff.inMinutes % 60);
-      } else {
-        return l10n.inMinutes(diff.inMinutes);
-      }
+      final relStr = diff.inDays > 0
+          ? l10n.inDaysHours(diff.inDays, diff.inHours % 24)
+          : diff.inHours > 0
+              ? l10n.inHoursMinutes(diff.inHours, diff.inMinutes % 60)
+              : l10n.inMinutes(diff.inMinutes);
+      return '$timeStr · $relStr';
     }
     return l10n.inactive;
   }
@@ -227,7 +223,8 @@ class AlarmCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   IconButton(
                     onPressed: () async {
-                      await AlarmService.instance.testAlarm(alarm);
+                      final locale = context.read<SettingsProvider>().locale;
+                      await AlarmService.instance.testAlarm(alarm, locale: locale);
                       if (context.mounted) {
                         final dur = alarm.ringDurationSeconds;
                         final msg = dur > 0
@@ -251,8 +248,10 @@ class AlarmCard extends StatelessWidget {
                   ),
                   Switch(
                     value: alarm.isEnabled,
-                    onChanged: (_) =>
-                        context.read<AlarmProvider>().toggleAlarm(alarm),
+                    onChanged: (_) => context.read<AlarmProvider>().toggleAlarm(
+                        alarm,
+                        locale: context.read<SettingsProvider>().locale,
+                      ),
                   ),
                 ],
               ),
