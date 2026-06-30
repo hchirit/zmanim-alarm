@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/alarm_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/alarm_service.dart';
+import '../services/hebrew_date_service.dart';
 import '../services/zmanim_calculator.dart';
 import '../models/zman_type.dart';
 import '../theme/app_theme.dart';
@@ -59,10 +60,10 @@ class _HomeScreenState extends State<HomeScreen>
             _NextZmanBanner(),
             TabBar(
               controller: _tabController,
-              indicatorColor: AppTheme.gold,
+              indicatorColor: Theme.of(context).colorScheme.secondary,
               indicatorWeight: 2,
-              labelColor: AppTheme.gold,
-              unselectedLabelColor: const Color(0xFF4A6B85),
+              labelColor: Theme.of(context).colorScheme.secondary,
+              unselectedLabelColor: Theme.of(context).appSubtle,
               tabs: [
                 Tab(text: l10n.tabAlarms),
                 Tab(text: l10n.tabZmanim),
@@ -103,14 +104,16 @@ class _Header extends StatelessWidget {
     final settings = context.watch<SettingsProvider>();
     final timeStr = DateFormat('HH:mm').format(now);
     final dateStr = DateFormat('EEEE d MMMM yyyy', l10n.dateLocale).format(now);
+    final hebrewDate = HebrewDateService.fromGregorian(now);
 
+    final t = Theme.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 16, 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0D1B2A), Color(0xFF122032)],
+          colors: t.appHeaderGradient,
         ),
       ),
       child: Row(
@@ -125,8 +128,8 @@ class _Header extends StatelessWidget {
                   children: [
                     Text(
                       timeStr,
-                      style: const TextStyle(
-                        color: AppTheme.onSurface,
+                      style: TextStyle(
+                        color: t.appText,
                         fontSize: 36,
                         fontWeight: FontWeight.w200,
                         letterSpacing: 2,
@@ -135,25 +138,34 @@ class _Header extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  dateStr,
-                  style: const TextStyle(
-                    color: Color(0xFF8BAFC9),
-                    fontSize: 13,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      dateStr,
+                      style: TextStyle(color: t.appMid, fontSize: 13),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '•',
+                      style: TextStyle(color: t.appSubtle, fontSize: 11),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      hebrewDate.formatted,
+                      style: TextStyle(color: t.appMid, fontSize: 13),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(Icons.location_on,
-                        size: 12, color: Color(0xFF4A6B85)),
+                    Icon(Icons.location_on, size: 12, color: t.appSubtle),
                     const SizedBox(width: 4),
                     Text(
                       settings.location.name.isEmpty
                           ? '${settings.location.latitude.toStringAsFixed(2)}°, ${settings.location.longitude.toStringAsFixed(2)}°'
                           : settings.location.name,
-                      style: const TextStyle(
-                          color: Color(0xFF4A6B85), fontSize: 12),
+                      style: TextStyle(color: t.appSubtle, fontSize: 12),
                     ),
                   ],
                 ),
@@ -165,8 +177,7 @@ class _Header extends StatelessWidget {
               context,
               MaterialPageRoute(builder: (_) => const SettingsScreen()),
             ),
-            icon: const Icon(Icons.settings_outlined,
-                color: Color(0xFF8BAFC9), size: 22),
+            icon: Icon(Icons.settings_outlined, color: t.appMid, size: 22),
           ),
         ],
       ),
@@ -244,8 +255,8 @@ class _NextZmanBanner extends StatelessWidget {
                 ),
                 Text(
                   nextType.localizedName(settings.locale),
-                  style: const TextStyle(
-                    color: AppTheme.onSurface,
+                  style: TextStyle(
+                    color: Theme.of(context).appText,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -266,8 +277,8 @@ class _NextZmanBanner extends StatelessWidget {
               ),
               Text(
                 l10n.inDuration(countdownStr),
-                style: const TextStyle(
-                  color: Color(0xFF8BAFC9),
+                style: TextStyle(
+                  color: Theme.of(context).appMid,
                   fontSize: 11,
                 ),
               ),
@@ -378,6 +389,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final t = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -386,17 +398,16 @@ class _EmptyState extends StatelessWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppTheme.primaryDark.withValues(alpha: 0.5),
+              color: t.appPrimaryContainer.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.alarm_add,
-                color: AppTheme.primaryBlue, size: 40),
+            child: Icon(Icons.alarm_add, color: t.colorScheme.primary, size: 40),
           ),
           const SizedBox(height: 20),
           Text(
             l10n.noAlarmsTitle,
-            style: const TextStyle(
-              color: AppTheme.onSurface,
+            style: TextStyle(
+              color: t.appText,
               fontSize: 18,
               fontWeight: FontWeight.w500,
             ),
@@ -405,7 +416,7 @@ class _EmptyState extends StatelessWidget {
           Text(
             l10n.noAlarmsSubtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF4A6B85), fontSize: 14),
+            style: TextStyle(color: t.appSubtle, fontSize: 14),
           ),
         ],
       ),

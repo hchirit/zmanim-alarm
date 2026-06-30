@@ -10,9 +10,9 @@ enum AlarmSound {
 /// Pour renommer un son, modifie la valeur correspondante ici.
 /// Les nouveaux fichiers sans entrée ici auront un nom généré automatiquement.
 const Map<String, String> kSoundLabels = {
-  'alarm_classic.wav': 'Classique',
-  'alarm_gentle.wav': 'Douce',
-  'alarm_shofar.wav': 'Shofar',
+  'alarm_classic.wav': 'Alarm 1',
+  'alarm_gentle.wav': 'Alarm 2',
+  'alarm_shofar.wav': 'Alarm 3',
   'alarm_silence.wav': 'Silence',
   'mission_impossible.mp3': 'Mission Impossible',
   'pink_panther.mp3': 'Pink Panther',

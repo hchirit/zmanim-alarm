@@ -251,6 +251,15 @@ class AppLocalizations {
   String get langEnglish => _t('English', 'English', 'אנגלית');
   String get langHebrew => _t('עברית', 'Hebrew', 'עברית');
 
+  // ── Apparence ────────────────────────────────────────────────────────────────
+  String get sectionAppearance => _t('Apparence', 'Appearance', 'מראה');
+  String get darkModeLabel => _t('Mode sombre', 'Dark mode', 'מצב לילה');
+  String get darkModeSubtitle => _t(
+    'Interface sombre pour les environnements peu éclairés',
+    'Dark interface for low-light environments',
+    'ממשק כהה לסביבות חשוכות',
+  );
+
   // ── Écran Zmanim ─────────────────────────────────────────────────────────────
   String get today => _t("Aujourd'hui", 'Today', 'היום');
   String get next => _t('Suivant', 'Next', 'הבא');

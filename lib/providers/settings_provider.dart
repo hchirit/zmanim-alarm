@@ -9,12 +9,14 @@ class SettingsProvider extends ChangeNotifier {
   bool _useGPS = true;
   String _calculationMethod = 'GRA';
   String _locale = 'fr';
+  bool _darkMode = true;
   bool _loaded = false;
 
   LocationData get location => _location;
   bool get useGPS => _useGPS;
   String get calculationMethod => _calculationMethod;
   String get locale => _locale;
+  bool get darkMode => _darkMode;
   bool get loaded => _loaded;
 
   Future<void> load() async {
@@ -22,6 +24,7 @@ class SettingsProvider extends ChangeNotifier {
     _useGPS = prefs.getBool('use_gps') ?? true;
     _calculationMethod = prefs.getString('calculation_method') ?? 'GRA';
     _locale = prefs.getString('locale') ?? 'fr';
+    _darkMode = prefs.getBool('dark_mode') ?? true;
     _location = await _locationSvc.getSavedLocation();
     _loaded = true;
     notifyListeners();
@@ -61,6 +64,13 @@ class SettingsProvider extends ChangeNotifier {
     _locale = locale;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('locale', locale);
+    notifyListeners();
+  }
+
+  Future<void> setDarkMode(bool value) async {
+    _darkMode = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('dark_mode', value);
     notifyListeners();
   }
 }

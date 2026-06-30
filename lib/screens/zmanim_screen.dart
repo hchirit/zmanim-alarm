@@ -109,7 +109,7 @@ class _DatePicker extends StatelessWidget {
           IconButton(
             onPressed: () =>
                 onChanged(date.subtract(const Duration(days: 1))),
-            icon: const Icon(Icons.chevron_left, color: AppTheme.primaryBlue),
+            icon: Icon(Icons.chevron_left, color: Theme.of(context).colorScheme.primary),
             padding: EdgeInsets.zero,
           ),
           Expanded(
@@ -120,45 +120,39 @@ class _DatePicker extends StatelessWidget {
                   initialDate: date,
                   firstDate: DateTime.now().subtract(const Duration(days: 365)),
                   lastDate: DateTime.now().add(const Duration(days: 365)),
-                  builder: (context, child) => Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: const ColorScheme.dark(
-                        primary: AppTheme.primaryBlue,
-                        surface: AppTheme.cardDark,
-                      ),
-                    ),
-                    child: child!,
-                  ),
                 );
                 if (picked != null) onChanged(picked);
               },
-              child: Column(
-                children: [
-                  Text(
-                    isToday
-                        ? l10n.today
-                        : DateFormat('EEEE', l10n.dateLocale).format(date),
-                    style: TextStyle(
-                      color: isToday ? AppTheme.gold : const Color(0xFF8BAFC9),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+              child: Builder(builder: (context) {
+                final t = Theme.of(context);
+                return Column(
+                  children: [
+                    Text(
+                      isToday
+                          ? l10n.today
+                          : DateFormat('EEEE', l10n.dateLocale).format(date),
+                      style: TextStyle(
+                        color: isToday ? t.colorScheme.secondary : t.appMid,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  Text(
-                    DateFormat('d MMMM yyyy', l10n.dateLocale).format(date),
-                    style: const TextStyle(
-                      color: AppTheme.onSurface,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                    Text(
+                      DateFormat('d MMMM yyyy', l10n.dateLocale).format(date),
+                      style: TextStyle(
+                        color: t.appText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                );
+              }),
             ),
           ),
           IconButton(
             onPressed: () => onChanged(date.add(const Duration(days: 1))),
-            icon: const Icon(Icons.chevron_right, color: AppTheme.primaryBlue),
+            icon: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.primary),
             padding: EdgeInsets.zero,
           ),
         ],
@@ -186,8 +180,9 @@ class _ZmanRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
     final color = isPast
-        ? const Color(0xFF2D4A62)
+        ? t.appPastZman
         : isNext
             ? zmanType.color
             : zmanType.color.withValues(alpha: 0.7);
@@ -195,14 +190,10 @@ class _ZmanRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: isNext
-            ? zmanType.color.withValues(alpha: 0.08)
-            : AppTheme.cardDark,
+        color: isNext ? zmanType.color.withValues(alpha: 0.08) : t.appCard,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isNext
-              ? zmanType.color.withValues(alpha: 0.4)
-              : const Color(0xFF1E3A52),
+          color: isNext ? zmanType.color.withValues(alpha: 0.4) : t.appBorder,
           width: isNext ? 1.5 : 1,
         ),
       ),
@@ -227,18 +218,15 @@ class _ZmanRow extends StatelessWidget {
                   Text(
                     zmanType.hebrewName,
                     style: TextStyle(
-                      color: isPast ? const Color(0xFF2D4A62) : AppTheme.onSurface,
+                      color: isPast ? t.appPastZman : t.appText,
                       fontSize: 14,
-                      fontWeight:
-                          isNext ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isNext ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
                   Text(
                     zmanType.localizedDescription(locale),
                     style: TextStyle(
-                      color: isPast
-                          ? const Color(0xFF1E3A52)
-                          : const Color(0xFF4A6B85),
+                      color: isPast ? t.appBorder : t.appSubtle,
                       fontSize: 11,
                     ),
                   ),

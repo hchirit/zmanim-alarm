@@ -66,16 +66,17 @@ class AlarmCard extends StatelessWidget {
         child: const Icon(Icons.delete_outline, color: Colors.red, size: 28),
       ),
       confirmDismiss: (_) async {
+        final t = Theme.of(context);
         return await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: AppTheme.cardDark,
+            backgroundColor: t.appCard,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text(l10n.deleteAlarmTitle,
-                style: const TextStyle(color: AppTheme.onSurface)),
+                style: TextStyle(color: t.appText)),
             content: Text(l10n.deleteAlarmConfirm(alarm.name),
-                style: const TextStyle(color: Color(0xFF8BAFC9))),
+                style: TextStyle(color: t.appMid)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
@@ -98,122 +99,64 @@ class AlarmCard extends StatelessWidget {
       },
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppTheme.cardDark,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: alarm.isEnabled
-                  ? zmanColor.withValues(alpha: 0.3)
-                  : const Color(0xFF1E3A52),
-              width: 1,
+        child: Builder(builder: (context) {
+          final t = Theme.of(context);
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: t.appCard,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: alarm.isEnabled
+                    ? zmanColor.withValues(alpha: 0.3)
+                    : t.appBorder,
+                width: 1,
+              ),
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: alarm.isEnabled
-                        ? zmanColor.withValues(alpha: 0.15)
-                        : const Color(0xFF1E3A52),
-                    borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: alarm.isEnabled
+                          ? zmanColor.withValues(alpha: 0.15)
+                          : t.appBorder,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      alarm.zmanType.icon,
+                      color: alarm.isEnabled ? zmanColor : t.appSubtle,
+                      size: 22,
+                    ),
                   ),
-                  child: Icon(
-                    alarm.zmanType.icon,
-                    color: alarm.isEnabled ? zmanColor : const Color(0xFF4A6B85),
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        alarm.name,
-                        style: TextStyle(
-                          color: alarm.isEnabled
-                              ? AppTheme.onSurface
-                              : const Color(0xFF4A6B85),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          alarm.name,
+                          style: TextStyle(
+                            color: alarm.isEnabled ? t.appText : t.appSubtle,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              alarm.zmanType.hebrewName,
-                              style: TextStyle(
-                                color: alarm.isEnabled
-                                    ? zmanColor
-                                    : const Color(0xFF4A6B85),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                          if (alarm.offsetMinutes != 0) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: alarm.isEnabled
-                                    ? zmanColor.withValues(alpha: 0.1)
-                                    : const Color(0xFF1E3A52),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                alarm.offsetDescription(locale),
-                                style: TextStyle(
-                                  color: alarm.isEnabled
-                                      ? zmanColor.withValues(alpha: 0.8)
-                                      : const Color(0xFF4A6B85),
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.repeat,
-                            size: 12,
-                            color: const Color(0xFF4A6B85),
-                          ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              alarm.daysDescription(locale),
-                              style: const TextStyle(
-                                color: Color(0xFF4A6B85),
-                                fontSize: 12,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                          if (alarm.isEnabled) ...[
-                            const SizedBox(width: 8),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
                             Flexible(
                               child: Text(
-                                _nextTriggerText(context),
+                                alarm.zmanType.hebrewName,
                                 style: TextStyle(
-                                  color: zmanColor.withValues(alpha: 0.7),
+                                  color: alarm.isEnabled
+                                      ? zmanColor
+                                      : t.appSubtle,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -221,45 +164,101 @@ class AlarmCard extends StatelessWidget {
                                 maxLines: 1,
                               ),
                             ),
+                            if (alarm.offsetMinutes != 0) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: alarm.isEnabled
+                                      ? zmanColor.withValues(alpha: 0.1)
+                                      : t.appBorder,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  alarm.offsetDescription(locale),
+                                  style: TextStyle(
+                                    color: alarm.isEnabled
+                                        ? zmanColor.withValues(alpha: 0.8)
+                                        : t.appSubtle,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  onPressed: () async {
-                    await AlarmService.instance.testAlarm(alarm);
-                    if (context.mounted) {
-                      final dur = alarm.ringDurationSeconds;
-                      final msg = dur > 0
-                          ? l10n.testingRingWithDuration(
-                              alarm.ringDurationDescription(locale))
-                          : l10n.testingRing;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(msg),
-                          duration: const Duration(seconds: 4),
                         ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.play_circle_outline,
-                      color: Color(0xFF4A6B85), size: 22),
-                  tooltip: l10n.testTooltip,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                ),
-                Switch(
-                  value: alarm.isEnabled,
-                  onChanged: (_) =>
-                      context.read<AlarmProvider>().toggleAlarm(alarm),
-                ),
-              ],
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.repeat, size: 12, color: t.appSubtle),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                alarm.daysDescription(locale),
+                                style: TextStyle(
+                                  color: t.appSubtle,
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                            if (alarm.isEnabled) ...[
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  _nextTriggerText(context),
+                                  style: TextStyle(
+                                    color: zmanColor.withValues(alpha: 0.7),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    onPressed: () async {
+                      await AlarmService.instance.testAlarm(alarm);
+                      if (context.mounted) {
+                        final dur = alarm.ringDurationSeconds;
+                        final msg = dur > 0
+                            ? l10n.testingRingWithDuration(
+                                alarm.ringDurationDescription(locale))
+                            : l10n.testingRing;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(msg),
+                            duration: const Duration(seconds: 4),
+                          ),
+                        );
+                      }
+                    },
+                    icon: Icon(Icons.play_circle_outline,
+                        color: t.appSubtle, size: 22),
+                    tooltip: l10n.testTooltip,
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints(minWidth: 32, minHeight: 32),
+                  ),
+                  Switch(
+                    value: alarm.isEnabled,
+                    onChanged: (_) =>
+                        context.read<AlarmProvider>().toggleAlarm(alarm),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ),
+          );
+        }),
       ),
     );
   }

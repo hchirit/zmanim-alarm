@@ -54,10 +54,23 @@ class _SettingsBodyState extends State<_SettingsBody> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final settings = context.watch<SettingsProvider>();
+    final t = Theme.of(context);
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        _SectionHeader(title: l10n.sectionAppearance),
+        const SizedBox(height: 8),
+        _SettingsTile(
+          icon: Icons.dark_mode_outlined,
+          title: l10n.darkModeLabel,
+          subtitle: l10n.darkModeSubtitle,
+          trailing: Switch(
+            value: settings.darkMode,
+            onChanged: (v) => settings.setDarkMode(v),
+          ),
+        ),
+        const SizedBox(height: 24),
         _SectionHeader(title: l10n.sectionLocation),
         const SizedBox(height: 8),
         _SettingsTile(
@@ -84,7 +97,7 @@ class _SettingsBodyState extends State<_SettingsBody> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : IconButton(
-                    icon: const Icon(Icons.refresh, color: AppTheme.primaryBlue),
+                    icon: Icon(Icons.refresh, color: t.colorScheme.primary),
                     onPressed: () async {
                       setState(() => _refreshing = true);
                       await settings.refreshGPSLocation();
@@ -103,9 +116,9 @@ class _SettingsBodyState extends State<_SettingsBody> {
                   controller: _latCtrl,
                   decoration: InputDecoration(
                     labelText: l10n.latitudeLabel,
-                    prefixIcon: const Icon(Icons.north, color: Color(0xFF8BAFC9)),
+                    prefixIcon: Icon(Icons.north, color: t.appMid),
                   ),
-                  style: const TextStyle(color: AppTheme.onSurface),
+                  style: TextStyle(color: t.appText),
                   keyboardType: const TextInputType.numberWithOptions(
                       decimal: true, signed: true),
                 ),
@@ -116,9 +129,9 @@ class _SettingsBodyState extends State<_SettingsBody> {
                   controller: _lonCtrl,
                   decoration: InputDecoration(
                     labelText: l10n.longitudeLabel,
-                    prefixIcon: const Icon(Icons.east, color: Color(0xFF8BAFC9)),
+                    prefixIcon: Icon(Icons.east, color: t.appMid),
                   ),
-                  style: const TextStyle(color: AppTheme.onSurface),
+                  style: TextStyle(color: t.appText),
                   keyboardType: const TextInputType.numberWithOptions(
                       decimal: true, signed: true),
                 ),
@@ -130,10 +143,9 @@ class _SettingsBodyState extends State<_SettingsBody> {
             controller: _nameCtrl,
             decoration: InputDecoration(
               labelText: l10n.placeName,
-              prefixIcon:
-                  const Icon(Icons.place_outlined, color: Color(0xFF8BAFC9)),
+              prefixIcon: Icon(Icons.place_outlined, color: t.appMid),
             ),
-            style: const TextStyle(color: AppTheme.onSurface),
+            style: TextStyle(color: t.appText),
             textCapitalization: TextCapitalization.words,
           ),
           const SizedBox(height: 12),
@@ -235,35 +247,35 @@ class _SettingsBodyState extends State<_SettingsBody> {
         const SizedBox(height: 24),
         _SectionHeader(title: l10n.sectionAbout),
         const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppTheme.cardDark,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF1E3A52)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Alarmes Zmanim v1.0',
-                style: TextStyle(
-                  color: AppTheme.onSurface,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
+        Builder(builder: (context) {
+          final t2 = Theme.of(context);
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: t2.appCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: t2.appBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Alarmes Zmanim v1.0',
+                  style: TextStyle(
+                    color: t2.appText,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                l10n.aboutDescription,
-                style: const TextStyle(
-                  color: Color(0xFF4A6B85),
-                  fontSize: 13,
+                const SizedBox(height: 6),
+                Text(
+                  l10n.aboutDescription,
+                  style: TextStyle(color: t2.appSubtle, fontSize: 13),
                 ),
-              ),
-            ],
-          ),
-        ),
+              ],
+            ),
+          );
+        }),
         const SizedBox(height: 40),
       ],
     );
@@ -279,8 +291,8 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title.toUpperCase(),
-      style: const TextStyle(
-        color: Color(0xFF8BAFC9),
+      style: TextStyle(
+        color: Theme.of(context).appMid,
         fontSize: 11,
         fontWeight: FontWeight.w600,
         letterSpacing: 1.2,
@@ -304,26 +316,25 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: t.appCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1E3A52)),
+        border: Border.all(color: t.appBorder),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF8BAFC9), size: 20),
+          Icon(icon, color: t.appMid, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(color: AppTheme.onSurface)),
+                Text(title, style: TextStyle(color: t.appText)),
                 Text(subtitle,
-                    style: const TextStyle(
-                        color: Color(0xFF4A6B85), fontSize: 12)),
+                    style: TextStyle(color: t.appSubtle, fontSize: 12)),
               ],
             ),
           ),
@@ -346,6 +357,7 @@ class _CityTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -353,22 +365,20 @@ class _CityTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primaryBlue.withValues(alpha: 0.1)
-              : AppTheme.cardDark,
+              ? t.colorScheme.primary.withValues(alpha: 0.1)
+              : t.appCard,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? AppTheme.primaryBlue.withValues(alpha: 0.4)
-                : const Color(0xFF1E3A52),
+                ? t.colorScheme.primary.withValues(alpha: 0.4)
+                : t.appBorder,
           ),
         ),
         child: Row(
           children: [
             Icon(
               Icons.location_city,
-              color: isSelected
-                  ? AppTheme.primaryBlue
-                  : const Color(0xFF4A6B85),
+              color: isSelected ? t.colorScheme.primary : t.appSubtle,
               size: 18,
             ),
             const SizedBox(width: 10),
@@ -376,21 +386,19 @@ class _CityTile extends StatelessWidget {
               child: Text(
                 location.name,
                 style: TextStyle(
-                  color: isSelected
-                      ? AppTheme.onSurface
-                      : const Color(0xFF8BAFC9),
-                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                  color: isSelected ? t.appText : t.appMid,
+                  fontWeight:
+                      isSelected ? FontWeight.w500 : FontWeight.normal,
                 ),
               ),
             ),
             Text(
               '${location.latitude.toStringAsFixed(2)}°, ${location.longitude.toStringAsFixed(2)}°',
-              style: const TextStyle(
-                  color: Color(0xFF4A6B85), fontSize: 12),
+              style: TextStyle(color: t.appSubtle, fontSize: 12),
             ),
             if (isSelected) ...[
               const SizedBox(width: 8),
-              const Icon(Icons.check, color: AppTheme.primaryBlue, size: 16),
+              Icon(Icons.check, color: t.colorScheme.primary, size: 16),
             ],
           ],
         ),
@@ -417,19 +425,20 @@ class _MethodTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = value == groupValue;
+    final t = Theme.of(context);
     return GestureDetector(
       onTap: () => onChanged(value),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: selected
-              ? AppTheme.primaryBlue.withValues(alpha: 0.08)
-              : AppTheme.cardDark,
+              ? t.colorScheme.primary.withValues(alpha: 0.08)
+              : t.appCard,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
-                ? AppTheme.primaryBlue.withValues(alpha: 0.4)
-                : const Color(0xFF1E3A52),
+                ? t.colorScheme.primary.withValues(alpha: 0.4)
+                : t.appBorder,
           ),
         ),
         child: Row(
@@ -439,7 +448,7 @@ class _MethodTile extends StatelessWidget {
               groupValue: groupValue,
               onChanged: (v) => v != null ? onChanged(v) : null,
               fillColor: WidgetStateProperty.all(
-                  selected ? AppTheme.primaryBlue : const Color(0xFF4A6B85)),
+                  selected ? t.colorScheme.primary : t.appSubtle),
             ),
             const SizedBox(width: 4),
             Expanded(
@@ -448,16 +457,13 @@ class _MethodTile extends StatelessWidget {
                 children: [
                   Text(title,
                       style: TextStyle(
-                        color: selected
-                            ? AppTheme.onSurface
-                            : const Color(0xFF8BAFC9),
+                        color: selected ? t.appText : t.appMid,
                         fontWeight: selected
                             ? FontWeight.w600
                             : FontWeight.normal,
                       )),
                   Text(subtitle,
-                      style: const TextStyle(
-                          color: Color(0xFF4A6B85), fontSize: 12)),
+                      style: TextStyle(color: t.appSubtle, fontSize: 12)),
                 ],
               ),
             ),
@@ -486,19 +492,20 @@ class _LanguageTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = value == groupValue;
+    final t = Theme.of(context);
     return GestureDetector(
       onTap: () => onChanged(value),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: selected
-              ? AppTheme.gold.withValues(alpha: 0.08)
-              : AppTheme.cardDark,
+              ? t.colorScheme.secondary.withValues(alpha: 0.08)
+              : t.appCard,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
-                ? AppTheme.gold.withValues(alpha: 0.5)
-                : const Color(0xFF1E3A52),
+                ? t.colorScheme.secondary.withValues(alpha: 0.5)
+                : t.appBorder,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -510,7 +517,7 @@ class _LanguageTile extends StatelessWidget {
               child: Text(
                 label,
                 style: TextStyle(
-                  color: selected ? AppTheme.onSurface : const Color(0xFF8BAFC9),
+                  color: selected ? t.appText : t.appMid,
                   fontWeight:
                       selected ? FontWeight.w600 : FontWeight.normal,
                   fontSize: 15,
@@ -518,7 +525,8 @@ class _LanguageTile extends StatelessWidget {
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle, color: AppTheme.gold, size: 18),
+              Icon(Icons.check_circle,
+                  color: t.colorScheme.secondary, size: 18),
           ],
         ),
       ),

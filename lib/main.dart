@@ -33,6 +33,7 @@ void main() async {
     ),
   );
 
+
   runApp(const ZmanimAlarmApp());
 }
 
@@ -49,13 +50,27 @@ class ZmanimAlarmApp extends StatelessWidget {
       child: Consumer<SettingsProvider>(
         builder: (context, settings, _) {
           final locale = Locale(settings.loaded ? settings.locale : 'fr');
+          final themeMode =
+              settings.darkMode ? ThemeMode.dark : ThemeMode.light;
+          final isDark = settings.darkMode;
+          SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                isDark ? Brightness.light : Brightness.dark,
+            systemNavigationBarColor:
+                isDark ? const Color(0xFF071018) : const Color(0xFFF5F7FA),
+            systemNavigationBarIconBrightness:
+                isDark ? Brightness.light : Brightness.dark,
+          ));
           return ValueListenableBuilder<ActiveRingInfo?>(
             valueListenable: AlarmService.activeRing,
             builder: (context, ring, child) {
               if (ring != null) {
                 return MaterialApp(
                   debugShowCheckedModeBanner: false,
-                  theme: AppTheme.darkTheme,
+                  theme: AppTheme.lightTheme,
+                  darkTheme: AppTheme.darkTheme,
+                  themeMode: themeMode,
                   locale: locale,
                   localizationsDelegates: AppLocalizations.localizationsDelegates,
                   supportedLocales: AppLocalizations.supportedLocales,
@@ -67,7 +82,9 @@ class ZmanimAlarmApp extends StatelessWidget {
             child: MaterialApp(
               title: 'Alarmes Zmanim',
               debugShowCheckedModeBanner: false,
-              theme: AppTheme.darkTheme,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeMode,
               locale: locale,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
@@ -143,8 +160,9 @@ class _AppStartupState extends State<_AppStartup> {
   }
 
   Widget _buildSplash() {
+    final t = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: t.scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -153,43 +171,41 @@ class _AppStartupState extends State<_AppStartup> {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                gradient: const RadialGradient(
-                  colors: [Color(0xFF1A3A5C), Color(0xFF071018)],
+                gradient: RadialGradient(
+                  colors: [t.appPrimaryContainer, t.scaffoldBackgroundColor],
                 ),
                 shape: BoxShape.circle,
-                border: Border.all(
-                    color: const Color(0xFF1E3A52), width: 1.5),
+                border: Border.all(color: t.appBorder, width: 1.5),
               ),
-              child: const Icon(Icons.star,
-                  color: AppTheme.gold, size: 36),
+              child: Icon(Icons.star, color: t.colorScheme.secondary, size: 36),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Alarmes Zmanim',
               style: TextStyle(
-                color: AppTheme.onSurface,
+                color: t.appText,
                 fontSize: 24,
                 fontWeight: FontWeight.w300,
                 letterSpacing: 1.5,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'זמנים',
               style: TextStyle(
-                color: AppTheme.gold,
+                color: t.colorScheme.secondary,
                 fontSize: 20,
                 fontWeight: FontWeight.w400,
               ),
             ),
             const SizedBox(height: 32),
-            const SizedBox(
+            SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
                 valueColor:
-                    AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+                    AlwaysStoppedAnimation<Color>(t.colorScheme.primary),
               ),
             ),
           ],

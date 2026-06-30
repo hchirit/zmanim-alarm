@@ -69,7 +69,7 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
     final locale = context.read<SettingsProvider>().locale;
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppTheme.cardDark,
+      backgroundColor: Theme.of(context).appCard,
       isScrollControlled: true,
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.78,
@@ -92,7 +92,7 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
   Future<void> _showSoundBottomSheet() async {
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppTheme.cardDark,
+      backgroundColor: Theme.of(context).appCard,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -264,16 +264,17 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
             IconButton(
               icon: const Icon(Icons.delete_outline, color: Colors.red),
               onPressed: () async {
+                final t2 = Theme.of(context);
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    backgroundColor: AppTheme.cardDark,
+                    backgroundColor: t2.appCard,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                     title: Text(l10n.deleteTitle,
-                        style: const TextStyle(color: AppTheme.onSurface)),
+                        style: TextStyle(color: t2.appText)),
                     content: Text(l10n.deleteConfirm(widget.alarm!.name),
-                        style: const TextStyle(color: Color(0xFF8BAFC9))),
+                        style: TextStyle(color: t2.appMid)),
                     actions: [
                       TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
@@ -367,23 +368,26 @@ class _AddAlarmScreenState extends State<AddAlarmScreen> {
                   _OptionTile(
                     icon: Icons.snooze,
                     title: l10n.snooze,
-                    trailing: DropdownButton<int>(
+                    trailing: Builder(builder: (context) {
+                    final t2 = Theme.of(context);
+                    return DropdownButton<int>(
                       value: _snoozeDuration,
-                      dropdownColor: AppTheme.cardDark,
-                      style: const TextStyle(color: AppTheme.onSurface),
+                      dropdownColor: t2.appCard,
+                      style: TextStyle(color: t2.appText),
                       underline: const SizedBox(),
                       items: [0, 5, 10, 15, 20].map((v) {
                         return DropdownMenuItem(
                           value: v,
                           child: Text(
                             v == 0 ? l10n.disabled : '$v min',
-                            style: const TextStyle(color: AppTheme.onSurface),
+                            style: TextStyle(color: t2.appText),
                           ),
                         );
                       }).toList(),
                       onChanged: (v) =>
                           setState(() => _snoozeDuration = v ?? 5),
-                    ),
+                    );
+                  }),
                   ),
                 ],
               ),
@@ -437,15 +441,16 @@ class _SoundButton extends StatelessWidget {
       label = _AddAlarmScreenState._formatSoundName(soundPath!);
     }
 
+    final t = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: t.appCard,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: _hasSelection ? AppTheme.primaryBlue : const Color(0xFF1E3A52),
+            color: _hasSelection ? t.colorScheme.primary : t.appBorder,
           ),
         ),
         child: Row(
@@ -456,9 +461,7 @@ class _SoundButton extends StatelessWidget {
                       ? Icons.audio_file
                       : Icons.music_note)
                   : Icons.music_note_outlined,
-              color: _hasSelection
-                  ? AppTheme.primaryBlue
-                  : const Color(0xFF4A6B85),
+              color: _hasSelection ? t.colorScheme.primary : t.appSubtle,
               size: 20,
             ),
             const SizedBox(width: 12),
@@ -466,9 +469,7 @@ class _SoundButton extends StatelessWidget {
               child: Text(
                 label,
                 style: TextStyle(
-                  color: _hasSelection
-                      ? AppTheme.onSurface
-                      : const Color(0xFF4A6B85),
+                  color: _hasSelection ? t.appText : t.appSubtle,
                   fontSize: 14,
                   fontWeight:
                       _hasSelection ? FontWeight.w500 : FontWeight.normal,
@@ -477,7 +478,7 @@ class _SoundButton extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Icon(Icons.chevron_right, color: Color(0xFF4A6B85), size: 20),
+            Icon(Icons.chevron_right, color: t.appSubtle, size: 20),
           ],
         ),
       ),
@@ -561,159 +562,164 @@ class _SoundSheetState extends State<_SoundSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E3A52),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.ringtoneSheetTitle,
-                    style: const TextStyle(
-                      color: Color(0xFF8BAFC9),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                    ),
+            Builder(builder: (context) {
+              final t = Theme.of(context);
+              return Column(children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: t.appBorder,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(height: 12),
-                  if (widget.bundledPaths.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Center(
-                        child: Text(l10n.loading,
-                            style: const TextStyle(color: Color(0xFF4A6B85))),
-                      ),
-                    )
-                  else
-                    ...widget.bundledPaths.map((path) => _SheetRow(
-                          name: _AddAlarmScreenState._formatSoundName(path),
-                          isSelected:
-                              !widget.isCustom && widget.selectedPath == path,
-                          isPlaying: _playingPath == path,
-                          onTap: () => widget.onSelectBundled(path),
-                          onPlayTap: () => _togglePreview(path),
-                        )),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(children: [
-                      const Expanded(child: Divider(color: Color(0xFF1E3A52))),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(l10n.or,
-                            style: const TextStyle(
-                                color: Color(0xFF4A6B85), fontSize: 11)),
-                      ),
-                      const Expanded(child: Divider(color: Color(0xFF1E3A52))),
-                    ]),
-                  ),
-                  GestureDetector(
-                    onTap: widget.onPickFile,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: widget.isCustom
-                            ? AppTheme.gold.withValues(alpha: 0.08)
-                            : AppTheme.surfaceDark,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: widget.isCustom
-                              ? AppTheme.gold.withValues(alpha: 0.6)
-                              : const Color(0xFF1E3A52),
-                          width: widget.isCustom ? 1.5 : 1,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.ringtoneSheetTitle,
+                        style: TextStyle(
+                          color: t.appMid,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.2,
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            widget.isCustom && widget.customSoundName != null
-                                ? Icons.audio_file
-                                : Icons.folder_open_outlined,
-                            color: widget.isCustom
-                                ? AppTheme.gold
-                                : const Color(0xFF4A6B85),
-                            size: 20,
+                      const SizedBox(height: 12),
+                      if (widget.bundledPaths.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Center(
+                            child: Text(l10n.loading,
+                                style: TextStyle(color: t.appSubtle)),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.isCustom &&
-                                          widget.customSoundName != null
-                                      ? widget.customSoundName!
-                                      : l10n.chooseFromPhone,
-                                  style: TextStyle(
-                                    color: widget.isCustom
-                                        ? AppTheme.onSurface
-                                        : const Color(0xFF8BAFC9),
-                                    fontWeight: widget.isCustom
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                    fontSize: 14,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  l10n.audioFormats,
-                                  style: const TextStyle(
-                                      color: Color(0xFF4A6B85), fontSize: 11),
-                                ),
-                              ],
+                        )
+                      else
+                        ...widget.bundledPaths.map((path) => _SheetRow(
+                              name: _AddAlarmScreenState._formatSoundName(path),
+                              isSelected:
+                                  !widget.isCustom && widget.selectedPath == path,
+                              isPlaying: _playingPath == path,
+                              onTap: () => widget.onSelectBundled(path),
+                              onPlayTap: () => _togglePreview(path),
+                            )),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(children: [
+                          const Expanded(child: Divider()),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(l10n.or,
+                                style: TextStyle(
+                                    color: t.appSubtle, fontSize: 11)),
+                          ),
+                          const Expanded(child: Divider()),
+                        ]),
+                      ),
+                      GestureDetector(
+                        onTap: widget.onPickFile,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: widget.isCustom
+                                ? AppTheme.gold.withValues(alpha: 0.08)
+                                : t.appDeep,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: widget.isCustom
+                                  ? AppTheme.gold.withValues(alpha: 0.6)
+                                  : t.appBorder,
+                              width: widget.isCustom ? 1.5 : 1,
                             ),
                           ),
-                          if (widget.isCustom &&
-                              widget.customSoundName != null) ...[
-                            GestureDetector(
-                              onTap: () {
-                                if (widget.selectedPath != null) {
-                                  _toggleCustomPreview(widget.selectedPath!);
-                                }
-                              },
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                margin: const EdgeInsets.only(right: 8),
-                                decoration: BoxDecoration(
-                                  color: _playingPath == widget.selectedPath
-                                      ? AppTheme.gold.withValues(alpha: 0.2)
-                                      : const Color(0xFF1E3A52),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  _playingPath == widget.selectedPath
-                                      ? Icons.stop
-                                      : Icons.play_arrow,
-                                  color: _playingPath == widget.selectedPath
-                                      ? AppTheme.gold
-                                      : const Color(0xFF4A6B85),
-                                  size: 18,
+                          child: Row(
+                            children: [
+                              Icon(
+                                widget.isCustom && widget.customSoundName != null
+                                    ? Icons.audio_file
+                                    : Icons.folder_open_outlined,
+                                color: widget.isCustom
+                                    ? AppTheme.gold
+                                    : t.appSubtle,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.isCustom &&
+                                              widget.customSoundName != null
+                                          ? widget.customSoundName!
+                                          : l10n.chooseFromPhone,
+                                      style: TextStyle(
+                                        color: widget.isCustom
+                                            ? t.appText
+                                            : t.appMid,
+                                        fontWeight: widget.isCustom
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                        fontSize: 14,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      l10n.audioFormats,
+                                      style: TextStyle(
+                                          color: t.appSubtle, fontSize: 11),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                            const Icon(Icons.check_circle,
-                                color: AppTheme.gold, size: 18),
-                          ] else
-                            const Icon(Icons.chevron_right,
-                                color: Color(0xFF4A6B85), size: 18),
-                        ],
+                              if (widget.isCustom &&
+                                  widget.customSoundName != null) ...[
+                                GestureDetector(
+                                  onTap: () {
+                                    if (widget.selectedPath != null) {
+                                      _toggleCustomPreview(widget.selectedPath!);
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 32,
+                                    height: 32,
+                                    margin: const EdgeInsets.only(right: 8),
+                                    decoration: BoxDecoration(
+                                      color: _playingPath == widget.selectedPath
+                                          ? AppTheme.gold.withValues(alpha: 0.2)
+                                          : t.appBorder,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      _playingPath == widget.selectedPath
+                                          ? Icons.stop
+                                          : Icons.play_arrow,
+                                      color: _playingPath == widget.selectedPath
+                                          ? AppTheme.gold
+                                          : t.appSubtle,
+                                      size: 18,
+                                    ),
+                                  ),
+                                ),
+                                const Icon(Icons.check_circle,
+                                    color: AppTheme.gold, size: 18),
+                              ] else
+                                Icon(Icons.chevron_right,
+                                    color: t.appSubtle, size: 18),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
+              ]);
+            }),
           ],
         ),
       ),
@@ -738,6 +744,7 @@ class _SheetRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -745,31 +752,26 @@ class _SheetRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primaryBlue.withValues(alpha: 0.1)
-              : AppTheme.cardDark,
+              ? t.colorScheme.primary.withValues(alpha: 0.1)
+              : t.appCard,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppTheme.primaryBlue : const Color(0xFF1E3A52),
+            color: isSelected ? t.colorScheme.primary : t.appBorder,
             width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Row(
           children: [
             Icon(Icons.music_note,
-                color: isSelected
-                    ? AppTheme.primaryBlue
-                    : const Color(0xFF4A6B85),
+                color: isSelected ? t.colorScheme.primary : t.appSubtle,
                 size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 name,
                 style: TextStyle(
-                  color: isSelected
-                      ? AppTheme.onSurface
-                      : const Color(0xFF8BAFC9),
-                  fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected ? t.appText : t.appMid,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   fontSize: 14,
                 ),
               ),
@@ -782,28 +784,23 @@ class _SheetRow extends StatelessWidget {
                 margin: const EdgeInsets.only(left: 8),
                 decoration: BoxDecoration(
                   color: isPlaying
-                      ? AppTheme.primaryBlue.withValues(alpha: 0.2)
-                      : const Color(0xFF0D1B2A),
+                      ? t.colorScheme.primary.withValues(alpha: 0.2)
+                      : t.appDeep,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isPlaying
-                        ? AppTheme.primaryBlue
-                        : const Color(0xFF1E3A52),
+                    color: isPlaying ? t.colorScheme.primary : t.appBorder,
                   ),
                 ),
                 child: Icon(
                   isPlaying ? Icons.stop : Icons.play_arrow,
-                  color: isPlaying
-                      ? AppTheme.primaryBlue
-                      : const Color(0xFF4A6B85),
+                  color: isPlaying ? t.colorScheme.primary : t.appSubtle,
                   size: 18,
                 ),
               ),
             ),
             if (isSelected) ...[
               const SizedBox(width: 8),
-              const Icon(Icons.check_circle,
-                  color: AppTheme.primaryBlue, size: 18),
+              Icon(Icons.check_circle, color: t.colorScheme.primary, size: 18),
             ],
           ],
         ),
@@ -841,12 +838,13 @@ class _DurationEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: t.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E3A52)),
+        border: Border.all(color: t.appBorder),
       ),
       child: Column(
         children: [
@@ -862,13 +860,11 @@ class _DurationEditor extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: _isUnlimited
-                    ? AppTheme.primaryBlue.withValues(alpha: 0.15)
+                    ? t.colorScheme.primary.withValues(alpha: 0.15)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: _isUnlimited
-                      ? AppTheme.primaryBlue
-                      : const Color(0xFF1E3A52),
+                  color: _isUnlimited ? t.colorScheme.primary : t.appBorder,
                   width: _isUnlimited ? 1.5 : 1,
                 ),
               ),
@@ -877,19 +873,14 @@ class _DurationEditor extends StatelessWidget {
                 children: [
                   Icon(Icons.all_inclusive,
                       size: 16,
-                      color: _isUnlimited
-                          ? AppTheme.primaryBlue
-                          : const Color(0xFF4A6B85)),
+                      color: _isUnlimited ? t.colorScheme.primary : t.appSubtle),
                   const SizedBox(width: 8),
                   Text(
                     l10n.untilDismissed,
                     style: TextStyle(
-                      color: _isUnlimited
-                          ? AppTheme.primaryBlue
-                          : const Color(0xFF4A6B85),
-                      fontWeight: _isUnlimited
-                          ? FontWeight.w600
-                          : FontWeight.normal,
+                      color: _isUnlimited ? t.colorScheme.primary : t.appSubtle,
+                      fontWeight:
+                          _isUnlimited ? FontWeight.w600 : FontWeight.normal,
                       fontSize: 13,
                     ),
                   ),
@@ -913,12 +904,12 @@ class _DurationEditor extends StatelessWidget {
                   }
                 },
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
                   ':',
                   style: TextStyle(
-                    color: AppTheme.onSurface,
+                    color: t.appText,
                     fontSize: 32,
                     fontWeight: FontWeight.w200,
                   ),
@@ -946,26 +937,22 @@ class _DurationEditor extends StatelessWidget {
                   onSecondsChanged(p.sec);
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: isActive
                         ? AppTheme.gold.withValues(alpha: 0.15)
-                        : const Color(0xFF122032),
+                        : t.appChipBg,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isActive
-                          ? AppTheme.gold
-                          : const Color(0xFF1E3A52),
+                      color: isActive ? AppTheme.gold : t.appBorder,
                       width: isActive ? 1.5 : 1,
                     ),
                   ),
                   child: Text(
                     p.label,
                     style: TextStyle(
-                      color: isActive
-                          ? AppTheme.gold
-                          : const Color(0xFF8BAFC9),
+                      color: isActive ? AppTheme.gold : t.appMid,
                       fontSize: 12,
                       fontWeight:
                           isActive ? FontWeight.w600 : FontWeight.normal,
@@ -980,7 +967,7 @@ class _DurationEditor extends StatelessWidget {
             _isUnlimited
                 ? l10n.ringContinues
                 : l10n.ringDurationText(minutes, seconds),
-            style: const TextStyle(color: Color(0xFF8BAFC9), fontSize: 12),
+            style: TextStyle(color: t.appMid, fontSize: 12),
             textAlign: TextAlign.center,
           ),
         ],
@@ -999,13 +986,14 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title.toUpperCase(),
-          style: const TextStyle(
-            color: Color(0xFF8BAFC9),
+          style: TextStyle(
+            color: t.appMid,
             fontSize: 11,
             fontWeight: FontWeight.w600,
             letterSpacing: 1.2,
@@ -1028,13 +1016,14 @@ class _NameHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           l10n.alarmNameLabel,
-          style: const TextStyle(
-            color: Color(0xFF4A6B85),
+          style: TextStyle(
+            color: t.appSubtle,
             fontSize: 10,
             fontWeight: FontWeight.w600,
             letterSpacing: 1.5,
@@ -1043,8 +1032,8 @@ class _NameHeader extends StatelessWidget {
         const SizedBox(height: 10),
         TextFormField(
           controller: controller,
-          style: const TextStyle(
-            color: AppTheme.onSurface,
+          style: TextStyle(
+            color: t.appText,
             fontSize: 22,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.3,
@@ -1052,18 +1041,19 @@ class _NameHeader extends StatelessWidget {
           decoration: InputDecoration(
             hintText: l10n.alarmNameHint,
             hintStyle: TextStyle(
-              color: AppTheme.onSurface.withValues(alpha: 0.2),
+              color: t.appText.withValues(alpha: 0.2),
               fontSize: 22,
               fontWeight: FontWeight.w600,
               letterSpacing: -0.3,
             ),
             filled: false,
             border: InputBorder.none,
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF1E3A52), width: 1),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: t.appBorder, width: 1),
             ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: AppTheme.primaryBlue, width: 1.5),
+            focusedBorder: UnderlineInputBorder(
+              borderSide:
+                  BorderSide(color: t.colorScheme.primary, width: 1.5),
             ),
             errorBorder: const UnderlineInputBorder(
               borderSide: BorderSide(color: Color(0xFFFF6B6B), width: 1.5),
@@ -1136,8 +1126,8 @@ class _ZmanButton extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     selected.localizedName(locale),
-                    style: const TextStyle(
-                      color: Color(0xFF8BAFC9),
+                    style: TextStyle(
+                      color: Theme.of(context).appMid,
                       fontSize: 12,
                     ),
                   ),
@@ -1174,37 +1164,41 @@ class _ZmanSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 4),
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E3A52),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-            child: Row(
-              children: [
-                Text(
-                  l10n.chooseZman,
-                  style: const TextStyle(
-                    color: Color(0xFF8BAFC9),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.2,
-                  ),
+          Builder(builder: (context) {
+            final t = Theme.of(context);
+            return Column(mainAxisSize: MainAxisSize.min, children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 4),
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: t.appBorder,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close,
-                      color: Color(0xFF4A6B85), size: 20),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                child: Row(
+                  children: [
+                    Text(
+                      l10n.chooseZman,
+                      style: TextStyle(
+                        color: t.appMid,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Icon(Icons.close, color: t.appSubtle, size: 20),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            ]);
+          }),
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -1226,15 +1220,15 @@ class _ZmanSheet extends StatelessWidget {
                       Padding(
                         padding:
                             const EdgeInsets.only(top: 16, bottom: 8, left: 2),
-                        child: Text(
+                        child: Builder(builder: (context) => Text(
                           catName.toUpperCase(),
-                          style: const TextStyle(
-                            color: Color(0xFF4A6B85),
+                          style: TextStyle(
+                            color: Theme.of(context).appSubtle,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1.2,
                           ),
-                        ),
+                        )),
                       ),
                       ...zmanim.map((z) => _ZmanSheetRow(
                             zman: z,
@@ -1277,19 +1271,19 @@ class _ZmanSheetRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? zman.color.withValues(alpha: 0.1)
-              : AppTheme.surfaceDark,
+              : Theme.of(context).appDeep,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? zman.color.withValues(alpha: 0.5)
-                : const Color(0xFF1E3A52),
+                : Theme.of(context).appBorder,
             width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Row(
           children: [
             Icon(zman.icon,
-                color: isSelected ? zman.color : const Color(0xFF4A6B85),
+                color: isSelected ? zman.color : Theme.of(context).appSubtle,
                 size: 20),
             const SizedBox(width: 12),
             Expanded(
@@ -1299,7 +1293,7 @@ class _ZmanSheetRow extends StatelessWidget {
                   Text(
                     zman.hebrewName,
                     style: TextStyle(
-                      color: isSelected ? zman.color : AppTheme.onSurface,
+                      color: isSelected ? zman.color : Theme.of(context).appText,
                       fontSize: 14,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.normal,
@@ -1307,8 +1301,8 @@ class _ZmanSheetRow extends StatelessWidget {
                   ),
                   Text(
                     zman.localizedName(locale),
-                    style: const TextStyle(
-                        color: Color(0xFF4A6B85), fontSize: 11),
+                    style: TextStyle(
+                        color: Theme.of(context).appSubtle, fontSize: 11),
                   ),
                 ],
               ),
@@ -1343,12 +1337,13 @@ class _OffsetEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: t.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E3A52)),
+        border: Border.all(color: t.appBorder),
       ),
       child: Column(
         children: [
@@ -1377,11 +1372,11 @@ class _OffsetEditor extends StatelessWidget {
                 max: 5,
                 onChanged: onHoursChanged,
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(':',
                     style: TextStyle(
-                        color: AppTheme.onSurface,
+                        color: t.appText,
                         fontSize: 32,
                         fontWeight: FontWeight.w200)),
               ),
@@ -1399,7 +1394,7 @@ class _OffsetEditor extends StatelessWidget {
             hours == 0 && minutes == 0
                 ? l10n.exactlyAtZman
                 : l10n.offsetText(hours, minutes, isBefore),
-            style: const TextStyle(color: Color(0xFF8BAFC9), fontSize: 13),
+            style: TextStyle(color: t.appMid, fontSize: 13),
           ),
         ],
       ),
@@ -1424,11 +1419,13 @@ class _ToggleButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: selected
-              ? AppTheme.primaryBlue.withValues(alpha: 0.2)
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? AppTheme.primaryBlue : const Color(0xFF1E3A52),
+            color: selected
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).appBorder,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -1437,8 +1434,8 @@ class _ToggleButton extends StatelessWidget {
             label,
             style: TextStyle(
               color: selected
-                  ? AppTheme.primaryBlue
-                  : const Color(0xFF4A6B85),
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).appSubtle,
               fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
@@ -1468,7 +1465,8 @@ class _NumberPicker extends StatelessWidget {
     return Column(
       children: [
         Text(label,
-            style: const TextStyle(color: Color(0xFF4A6B85), fontSize: 11)),
+            style: TextStyle(
+                color: Theme.of(context).appSubtle, fontSize: 11)),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -1480,11 +1478,11 @@ class _NumberPicker extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
                 value.toString().padLeft(2, '0'),
-                style: const TextStyle(
-                  color: AppTheme.onSurface,
+                style: TextStyle(
+                  color: Theme.of(context).appText,
                   fontSize: 28,
                   fontWeight: FontWeight.w300,
-                  fontFeatures: [FontFeature.tabularFigures()],
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ),
@@ -1542,17 +1540,17 @@ class _CircleBtnState extends State<_CircleBtn> {
         height: 34,
         decoration: BoxDecoration(
           color: widget.onTap != null
-              ? AppTheme.primaryDark
-              : AppTheme.primaryDark.withValues(alpha: 0.3),
+              ? Theme.of(context).appPrimaryContainer
+              : Theme.of(context).appPrimaryContainer.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFF1E3A52)),
+          border: Border.all(color: Theme.of(context).appBorder),
         ),
         child: Icon(
           widget.icon,
           size: 16,
           color: widget.onTap != null
-              ? AppTheme.primaryBlue
-              : const Color(0xFF2D4A62),
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).appPastZman,
         ),
       ),
     );
@@ -1591,36 +1589,36 @@ class _DaySelector extends StatelessWidget {
                 }
                 onChanged(newList);
               },
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppTheme.primaryBlue.withValues(alpha: 0.2)
-                      : AppTheme.cardDark,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
+              child: Builder(builder: (context) {
+                final t = Theme.of(context);
+                return Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
                     color: isSelected
-                        ? AppTheme.primaryBlue
-                        : const Color(0xFF1E3A52),
-                    width: isSelected ? 1.5 : 1,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    letters[i],
-                    style: TextStyle(
-                      color: isSelected
-                          ? AppTheme.primaryBlue
-                          : const Color(0xFF4A6B85),
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.normal,
-                      fontSize: 13,
+                        ? t.colorScheme.primary.withValues(alpha: 0.2)
+                        : t.appCard,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? t.colorScheme.primary : t.appBorder,
+                      width: isSelected ? 1.5 : 1,
                     ),
                   ),
-                ),
-              ),
+                  child: Center(
+                    child: Text(
+                      letters[i],
+                      style: TextStyle(
+                        color: isSelected
+                            ? t.colorScheme.primary
+                            : t.appSubtle,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.normal,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                );
+              }),
             );
           }),
         ),
@@ -1657,12 +1655,13 @@ class _QuickSelectBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: const Color(0xFF122032),
+          color: Theme.of(context).appChipBg,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFF1E3A52)),
+          border: Border.all(color: Theme.of(context).appBorder),
         ),
         child: Text(label,
-            style: const TextStyle(color: Color(0xFF8BAFC9), fontSize: 12)),
+            style: TextStyle(
+                color: Theme.of(context).appMid, fontSize: 12)),
       ),
     );
   }
@@ -1678,21 +1677,21 @@ class _OptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: t.appCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1E3A52)),
+        border: Border.all(color: t.appBorder),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF8BAFC9), size: 20),
+          Icon(icon, color: t.appMid, size: 20),
           const SizedBox(width: 12),
           Expanded(
-              child: Text(title,
-                  style: const TextStyle(color: AppTheme.onSurface))),
+              child: Text(title, style: TextStyle(color: t.appText))),
           trailing,
         ],
       ),
