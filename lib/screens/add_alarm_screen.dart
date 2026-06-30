@@ -513,11 +513,22 @@ class _SoundSheet extends StatefulWidget {
 class _SoundSheetState extends State<_SoundSheet> {
   final AudioPlayer _player = AudioPlayer();
   String? _playingPath;
+  StreamSubscription<void>? _completeSub;
 
   @override
   void dispose() {
+    _completeSub?.cancel();
     _player.dispose();
     super.dispose();
+  }
+
+  void _listenForCompletion(String path) {
+    _completeSub?.cancel();
+    _completeSub = _player.onPlayerComplete.listen((_) {
+      if (mounted && _playingPath == path) {
+        setState(() => _playingPath = null);
+      }
+    });
   }
 
   Future<void> _togglePreview(String assetPath) async {
@@ -532,11 +543,7 @@ class _SoundSheetState extends State<_SoundSheet> {
         ? assetPath.substring('assets/'.length)
         : assetPath;
     await _player.play(AssetSource(src));
-    _player.onPlayerComplete.listen((_) {
-      if (mounted && _playingPath == assetPath) {
-        setState(() => _playingPath = null);
-      }
-    });
+    _listenForCompletion(assetPath);
   }
 
   Future<void> _toggleCustomPreview(String filePath) async {
@@ -548,11 +555,7 @@ class _SoundSheetState extends State<_SoundSheet> {
     await _player.stop();
     setState(() => _playingPath = filePath);
     await _player.play(DeviceFileSource(filePath));
-    _player.onPlayerComplete.listen((_) {
-      if (mounted && _playingPath == filePath) {
-        setState(() => _playingPath = null);
-      }
-    });
+    _listenForCompletion(filePath);
   }
 
   @override
