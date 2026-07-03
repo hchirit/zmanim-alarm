@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/app_localizations.dart';
+import '../providers/settings_provider.dart';
 import '../services/alarm_service.dart';
 import '../theme/app_theme.dart';
 
@@ -107,6 +109,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     ];
 
+    final totalPages = 1 + steps.length;
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
       body: SafeArea(
@@ -117,15 +121,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 controller: _controller,
                 physics: const NeverScrollableScrollPhysics(),
                 onPageChanged: (i) => setState(() => _page = i),
-                itemCount: steps.length,
-                itemBuilder: (context, i) => _StepPage(
-                  data: steps[i],
-                  loading: _requesting && steps[i].isPermission,
-                  totalPermissions: 3,
-                ),
+                itemCount: totalPages,
+                itemBuilder: (context, i) {
+                  if (i == 0) {
+                    return _LanguagePage(
+                      onSelect: (lang) {
+                        context.read<SettingsProvider>().setLocale(lang);
+                        _next();
+                      },
+                    );
+                  }
+                  final step = steps[i - 1];
+                  return _StepPage(
+                    data: step,
+                    loading: _requesting && step.isPermission,
+                    totalPermissions: 3,
+                  );
+                },
               ),
             ),
-            _ProgressDots(count: steps.length, current: _page),
+            _ProgressDots(count: totalPages, current: _page),
             const SizedBox(height: 36),
           ],
         ),
@@ -289,6 +304,104 @@ class _StepPage extends StatelessWidget {
 
           const Spacer(flex: 2),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Page de sélection de langue ────────────────────────────────────────────
+
+class _LanguagePage extends StatelessWidget {
+  final void Function(String) onSelect;
+  const _LanguagePage({required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Spacer(flex: 3),
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppTheme.goldDark,
+              border: Border.all(
+                color: AppTheme.gold.withValues(alpha: 0.5),
+                width: 1.5,
+              ),
+            ),
+            child: const Icon(Icons.language, size: 46, color: AppTheme.gold),
+          ),
+          const Spacer(flex: 1),
+          const Text(
+            'Language  ·  Langue  ·  שפה',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppTheme.onSurface,
+              fontSize: 22,
+              fontWeight: FontWeight.w300,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const Spacer(flex: 2),
+          _LangOption(flag: '🇫🇷', label: 'Français', onTap: () => onSelect('fr')),
+          const SizedBox(height: 14),
+          _LangOption(flag: '🇬🇧', label: 'English', onTap: () => onSelect('en')),
+          const SizedBox(height: 14),
+          _LangOption(flag: '🇮🇱', label: 'עברית', onTap: () => onSelect('he'), rtl: true),
+          const Spacer(flex: 3),
+        ],
+      ),
+    );
+  }
+}
+
+class _LangOption extends StatelessWidget {
+  final String flag;
+  final String label;
+  final VoidCallback onTap;
+  final bool rtl;
+
+  const _LangOption({
+    required this.flag,
+    required this.label,
+    required this.onTap,
+    this.rtl = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 58,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppTheme.onSurface,
+          side: const BorderSide(color: Color(0xFF1E3A52)),
+          backgroundColor: AppTheme.cardDark,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: rtl
+              ? [
+                  Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+                  const SizedBox(width: 12),
+                  Text(flag, style: const TextStyle(fontSize: 24)),
+                ]
+              : [
+                  Text(flag, style: const TextStyle(fontSize: 24)),
+                  const SizedBox(width: 12),
+                  Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+                ],
+        ),
       ),
     );
   }

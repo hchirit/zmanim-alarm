@@ -266,9 +266,9 @@ class AppLocalizations {
 
   // ── Onboarding ───────────────────────────────────────────────────────────────
   String get onboardingWelcomeTitle => _t(
-    'Bienvenue dans\nAlarmes Zmanim',
-    'Welcome to\nZmanim Alarms',
-    'ברוכים הבאים\nלאזעקות זמנים',
+    'Bienvenue dans\nZmanim Alarm',
+    'Welcome to\nZmanim Alarm',
+    'ברוכים הבאים\nל-Zmanim Alarm',
   );
   String get onboardingWelcomeBody => _t(
     'Cette application déclenche des alarmes aux heures liturgiques juives (zmanim). Pour fonctionner correctement, elle nécessite votre autorisation pour trois fonctionnalités essentielles.',

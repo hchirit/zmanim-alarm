@@ -98,7 +98,7 @@ class _AppRootState extends State<_AppRoot> {
         return child!;
       },
       child: MaterialApp(
-        title: 'Alarmes Zmanim',
+        title: 'Zmanim Alarm',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
@@ -188,7 +188,7 @@ class _AppStartupState extends State<_AppStartup> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Alarmes Zmanim',
+              'Zmanim Alarm',
               style: TextStyle(
                 color: t.appText,
                 fontSize: 24,
